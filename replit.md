@@ -86,24 +86,47 @@ As seguintes variáveis já estão configuradas no Replit Secrets:
 - ✅ Persistência de dados em PostgreSQL
 
 ## Sobre o Pagamento
-O sistema implementa a integração com Stripe no backend:
-- Cria Payment Intent através da API do Stripe
-- Armazena o ID do Payment Intent no banco
-- Valida propriedade do agendamento antes de confirmar
-- Em **modo demonstração** (PAYMENT_DEMO_MODE=true): aceita Payment Intents sem validação de status
-- Em **modo produção** (PAYMENT_DEMO_MODE=false): requer status 'succeeded' ou 'requires_capture'
 
-Para produção completa com coleta real de cartão:
-1. Definir PAYMENT_DEMO_MODE=false nas variáveis de ambiente
-2. Integrar `@stripe/stripe-react-native` no componente de pagamento
-3. Usar `StripeProvider` e `CardField` para captura segura dos dados do cartão
-4. Confirmar o Payment Intent com `confirmPayment` usando o `clientSecret`
-5. O backend valida o status do Payment Intent no Stripe antes de confirmar
+### Estado Atual (Modo Demonstração)
+O sistema implementa a integração com Stripe no backend:
+- ✅ Cria Payment Intent através da API do Stripe
+- ✅ Armazena o ID do Payment Intent no banco
+- ✅ Valida propriedade do agendamento (clientId) antes de confirmar
+- ✅ Consulta status do Payment Intent no Stripe via API
+- ✅ Em **modo demonstração** (PAYMENT_DEMO_MODE≠false): aceita Payment Intents para testes
+- ✅ Em **modo produção** (PAYMENT_DEMO_MODE=false): requer status 'succeeded' ou 'requires_capture'
+
+### Próximos Passos para Produção Completa
+Para habilitar coleta real de cartões e pagamentos:
+
+1. **Instalar biblioteca Stripe React Native:**
+```bash
+npm install @stripe/stripe-react-native
+```
+
+2. **Atualizar app/(booking)/payment.tsx:**
+```typescript
+import { StripeProvider, CardField, confirmPayment } from '@stripe/stripe-react-native';
+
+// Envolver tela com StripeProvider usando publishable key
+// Substituir simulação por confirmPayment(clientSecret, {...})
+```
+
+3. **Configurar variável de ambiente:**
+```
+PAYMENT_DEMO_MODE=false
+```
+
+4. **Backend já está pronto:**
+   - Valida status do Payment Intent no Stripe
+   - Requer 'succeeded' ou 'requires_capture' em modo produção
+   - Bloqueia confirmações sem pagamento válido
 
 ### Segurança
 - ✅ Endpoint `/api/payments/confirm` valida propriedade do agendamento
-- ✅ Verifica status do Payment Intent no Stripe
+- ✅ Verifica status do Payment Intent no Stripe antes de confirmar
 - ✅ Requer autenticação JWT
+- ✅ Modo demo claramente separado do modo produção
 
 ## Notas de Segurança
 - Senhas são hashadas com bcrypt
