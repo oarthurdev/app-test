@@ -35,6 +35,8 @@ export default function PaymentScreen() {
 
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
+      console.log('MODO DEMONSTRAÇÃO: Payment Intent criado, simulando aprovação');
+
       const confirmResponse = await fetch(`${API_URL}/api/payments/confirm`, {
         method: 'POST',
         headers: {
@@ -47,7 +49,8 @@ export default function PaymentScreen() {
       });
 
       if (!confirmResponse.ok) {
-        throw new Error('Erro ao confirmar pagamento');
+        const errorData = await confirmResponse.json();
+        throw new Error(errorData.error || 'Erro ao confirmar pagamento');
       }
 
       Alert.alert(
@@ -82,11 +85,19 @@ export default function PaymentScreen() {
           </ThemedText>
           
           <ThemedText style={styles.info}>
-            Nesta demonstração, o pagamento será simulado através do Stripe.
+            ⚠️ MODO DEMONSTRAÇÃO: O pagamento está sendo simulado.
           </ThemedText>
 
           <ThemedText style={styles.info}>
-            Em produção, você seria redirecionado para uma tela de pagamento segura do Stripe.
+            Em produção, esta tela integraria o @stripe/stripe-react-native com elementos de cartão seguros e processamento real através do Stripe Payment Intent criado no backend.
+          </ThemedText>
+
+          <ThemedText style={styles.info}>
+            Para fins de teste, ao clicar em "Pagar Agora", o sistema:
+            1. Cria um Payment Intent no Stripe
+            2. Simula aprovação do pagamento
+            3. Confirma o agendamento no banco
+            4. Envia SMS de confirmação (se Twilio configurado)
           </ThemedText>
         </View>
 

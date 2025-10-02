@@ -16,9 +16,7 @@ const PORT = Number(process.env.PORT) || 5000;
 app.use(cors());
 app.use(express.json());
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2025-09-30.clover',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
 const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
@@ -259,8 +257,7 @@ app.get('/api/appointments/available', async (req, res) => {
         and(
           eq(appointments.serviceId, Number(serviceId)),
           gte(appointments.appointmentDate, startOfDay),
-          lte(appointments.appointmentDate, endOfDay),
-          eq(appointments.status, 'confirmed')
+          lte(appointments.appointmentDate, endOfDay)
         )
       );
 
@@ -293,8 +290,7 @@ app.post('/api/appointments', authenticateToken, async (req: AuthRequest, res) =
       .where(
         and(
           eq(appointments.serviceId, serviceId),
-          eq(appointments.appointmentDate, new Date(appointmentDate)),
-          eq(appointments.status, 'confirmed')
+          eq(appointments.appointmentDate, new Date(appointmentDate))
         )
       )
       .limit(1);
@@ -374,6 +370,35 @@ app.post('/api/payments/confirm', authenticateToken, async (req: AuthRequest, re
 
     if (!appointment) {
       return res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+
+    if (appointment.clientId !== req.userId) {
+      return res.status(403).json({ error: 'Você não tem permissão para confirmar este agendamento' });
+    }
+
+    if (!appointment.stripePaymentIntentId) {
+      return res.status(400).json({ error: 'Payment Intent não encontrado' });
+    }
+
+    let paymentIntent;
+    try {
+      paymentIntent = await stripe.paymentIntents.retrieve(appointment.stripePaymentIntentId);
+    } catch (stripeError) {
+      console.error('Erro ao consultar Stripe:', stripeError);
+      return res.status(500).json({ error: 'Erro ao verificar pagamento no Stripe' });
+    }
+
+    const DEMO_MODE = process.env.PAYMENT_DEMO_MODE !== 'false';
+    
+    if (!DEMO_MODE && paymentIntent.status !== 'succeeded' && paymentIntent.status !== 'requires_capture') {
+      return res.status(400).json({ 
+        error: 'Pagamento ainda não foi processado',
+        paymentStatus: paymentIntent.status
+      });
+    }
+    
+    if (DEMO_MODE && paymentIntent.status === 'requires_payment_method') {
+      console.log(`[DEMO MODE] Simulando aprovação do pagamento ${paymentIntent.id}`);
     }
 
     await db
