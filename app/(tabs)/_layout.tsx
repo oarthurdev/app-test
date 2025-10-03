@@ -1,6 +1,7 @@
 import { Tabs, router } from 'expo-router';
 import React from 'react';
 import { Platform, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 import { HapticTab } from '@/components/HapticTab';
 import { IconSymbol } from '@/components/ui/IconSymbol';
@@ -31,14 +32,14 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Serviços',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="cut" size={24} color={color} />,
         }}
       />
       <Tabs.Screen
         name="appointments"
         options={{
           title: 'Agendamentos',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="calendar" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="calendar" size={24} color={color} />,
         }}
       />
       {user?.role === 'professional' && (
@@ -46,7 +47,7 @@ export default function TabLayout() {
           name="admin"
           options={{
             title: 'Admin',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="gear" color={color} />,
+            tabBarIcon: ({ color }) => <Ionicons name="settings" size={24} color={color} />,
           }}
         />
       )}
@@ -54,7 +55,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
         }}
       />
     </Tabs>
