@@ -1,16 +1,20 @@
-import { useState, useEffect } from 'react';
-import { StyleSheet, TouchableOpacity, ActivityIndicator, View, Alert } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, View, Alert, ScrollView } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { theme } from '@/constants/Theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function PaymentScreen() {
   const { appointmentId } = useLocalSearchParams();
   const { token } = useAuth();
-  const [loading, setLoading] = useState(false);
   const [processing, setProcessing] = useState(false);
 
   const handlePayment = async () => {
@@ -54,7 +58,7 @@ export default function PaymentScreen() {
       }
 
       Alert.alert(
-        'Sucesso!',
+        'Sucesso! 🎉',
         'Pagamento realizado com sucesso! Você receberá uma confirmação por SMS.',
         [
           {
@@ -74,67 +78,133 @@ export default function PaymentScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.content}>
-        <ThemedText type="title" style={styles.title}>
-          Pagamento
-        </ThemedText>
-
-        <View style={styles.paymentCard}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Método de Pagamento
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.primaryDark]}
+        style={styles.headerGradient}
+      >
+        <View style={styles.header}>
+          <View style={styles.headerIcon}>
+            <Ionicons name="card" size={48} color={theme.colors.text.inverse} />
+          </View>
+          <ThemedText style={styles.title}>Pagamento</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Finalize seu agendamento
           </ThemedText>
+        </View>
+      </LinearGradient>
+
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <Card style={styles.demoCard}>
+          <View style={styles.demoHeader}>
+            <Ionicons name="flask" size={32} color={theme.colors.warning} />
+            <ThemedText style={styles.demoTitle}>Modo Demonstração</ThemedText>
+          </View>
           
-          <ThemedText style={styles.info}>
-            ⚠️ MODO DEMONSTRAÇÃO: O pagamento está sendo simulado.
+          <ThemedText style={styles.demoText}>
+            O pagamento está sendo simulado para fins de teste.
           </ThemedText>
 
-          <ThemedText style={styles.info}>
-            Em produção, esta tela integraria o @stripe/stripe-react-native com elementos de cartão seguros e processamento real através do Stripe Payment Intent criado no backend.
-          </ThemedText>
+          <View style={styles.demoDivider} />
 
-          <ThemedText style={styles.info}>
-            Para fins de teste, ao clicar em "Pagar Agora", o sistema:
-            1. Cria um Payment Intent no Stripe
-            2. Simula aprovação do pagamento
-            3. Confirma o agendamento no banco
-            4. Envia SMS de confirmação (se Twilio configurado)
-          </ThemedText>
-        </View>
-
-        <View style={styles.statusCard}>
-          <ThemedText style={styles.statusText}>
-            Agendamento #{appointmentId}
-          </ThemedText>
-          <ThemedText style={styles.statusLabel}>
-            Aguardando pagamento
-          </ThemedText>
-        </View>
-
-        <TouchableOpacity
-          style={[styles.button, processing && styles.buttonDisabled]}
-          onPress={handlePayment}
-          disabled={processing}
-        >
-          {processing ? (
-            <View>
-              <ActivityIndicator color="#fff" />
-              <ThemedText style={[styles.buttonText, { marginTop: 10 }]}>
-                Processando pagamento...
+          <View style={styles.demoInfo}>
+            <Ionicons name="information-circle" size={20} color={theme.colors.info} />
+            <View style={styles.demoInfoText}>
+              <ThemedText style={styles.demoInfoTitle}>Em Produção:</ThemedText>
+              <ThemedText style={styles.demoInfoDesc}>
+                Esta tela integraria com @stripe/stripe-react-native com elementos de cartão seguros e processamento real.
               </ThemedText>
             </View>
-          ) : (
-            <ThemedText style={styles.buttonText}>Pagar Agora</ThemedText>
-          )}
-        </TouchableOpacity>
+          </View>
+        </Card>
 
-        <TouchableOpacity
-          style={styles.cancelButton}
-          onPress={() => router.replace('/(tabs)')}
+        <Card style={styles.processCard}>
+          <ThemedText style={styles.processTitle}>Fluxo de Pagamento</ThemedText>
+          
+          <View style={styles.step}>
+            <View style={styles.stepNumber}>
+              <ThemedText style={styles.stepNumberText}>1</ThemedText>
+            </View>
+            <View style={styles.stepContent}>
+              <ThemedText style={styles.stepTitle}>Criar Payment Intent</ThemedText>
+              <ThemedText style={styles.stepDesc}>
+                Sistema cria intenção de pagamento no Stripe
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.step}>
+            <View style={styles.stepNumber}>
+              <ThemedText style={styles.stepNumberText}>2</ThemedText>
+            </View>
+            <View style={styles.stepContent}>
+              <ThemedText style={styles.stepTitle}>Simular Aprovação</ThemedText>
+              <ThemedText style={styles.stepDesc}>
+                Em produção: coleta dados do cartão
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.step}>
+            <View style={styles.stepNumber}>
+              <ThemedText style={styles.stepNumberText}>3</ThemedText>
+            </View>
+            <View style={styles.stepContent}>
+              <ThemedText style={styles.stepTitle}>Confirmar Agendamento</ThemedText>
+              <ThemedText style={styles.stepDesc}>
+                Atualiza status no banco de dados
+              </ThemedText>
+            </View>
+          </View>
+
+          <View style={styles.step}>
+            <View style={styles.stepNumber}>
+              <ThemedText style={styles.stepNumberText}>4</ThemedText>
+            </View>
+            <View style={styles.stepContent}>
+              <ThemedText style={styles.stepTitle}>Enviar Confirmação</ThemedText>
+              <ThemedText style={styles.stepDesc}>
+                SMS via Twilio (se configurado)
+              </ThemedText>
+            </View>
+          </View>
+        </Card>
+
+        <Card style={styles.statusCard}>
+          <View style={styles.statusHeader}>
+            <Ionicons name="receipt-outline" size={24} color={theme.colors.text.secondary} />
+            <View style={styles.statusInfo}>
+              <ThemedText style={styles.statusLabel}>Agendamento</ThemedText>
+              <ThemedText style={styles.statusValue}>#{appointmentId}</ThemedText>
+            </View>
+          </View>
+          <View style={styles.statusBadge}>
+            <Ionicons name="time-outline" size={16} color={theme.colors.warning} />
+            <ThemedText style={styles.statusBadgeText}>Aguardando pagamento</ThemedText>
+          </View>
+        </Card>
+
+        <Button
+          title={processing ? "Processando..." : "Pagar Agora"}
+          onPress={handlePayment}
+          loading={processing}
+          fullWidth
+          size="lg"
+        />
+
+        <Button
+          title="Cancelar"
+          onPress={() => router.back()}
+          variant="outline"
+          fullWidth
           disabled={processing}
-        >
-          <ThemedText style={styles.cancelButtonText}>Cancelar</ThemedText>
-        </TouchableOpacity>
-      </View>
+        />
+
+        <View style={styles.bottomSpacing} />
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -142,71 +212,158 @@ export default function PaymentScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  headerGradient: {
+    paddingTop: 60,
+    paddingBottom: theme.spacing.xl,
+  },
+  header: {
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  headerIcon: {
+    marginBottom: theme.spacing.md,
+  },
+  title: {
+    fontSize: theme.fontSize.xxxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.inverse,
+    marginBottom: theme.spacing.xs,
+  },
+  subtitle: {
+    fontSize: theme.fontSize.md,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
   },
   content: {
     flex: 1,
-    padding: 20,
   },
-  title: {
-    marginBottom: 20,
-    marginTop: 20,
+  scrollContent: {
+    padding: theme.spacing.lg,
+    gap: theme.spacing.lg,
   },
-  paymentCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  demoCard: {
+    backgroundColor: `${theme.colors.warning}10`,
+    borderWidth: 2,
+    borderColor: `${theme.colors.warning}30`,
   },
-  sectionTitle: {
-    marginBottom: 15,
+  demoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
   },
-  info: {
-    marginBottom: 10,
-    opacity: 0.7,
+  demoTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.warning,
+  },
+  demoText: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.md,
+  },
+  demoDivider: {
+    height: 1,
+    backgroundColor: `${theme.colors.warning}20`,
+    marginVertical: theme.spacing.md,
+  },
+  demoInfo: {
+    flexDirection: 'row',
+    gap: theme.spacing.sm,
+  },
+  demoInfoText: {
+    flex: 1,
+  },
+  demoInfoTitle: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.info,
+    marginBottom: 4,
+  },
+  demoInfoDesc: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
     lineHeight: 20,
   },
-  statusCard: {
-    backgroundColor: '#FFF3CD',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: '#FFA500',
+  processCard: {
   },
-  statusText: {
-    fontWeight: 'bold',
-    marginBottom: 5,
+  processTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.lg,
+  },
+  step: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+  },
+  stepNumber: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: theme.colors.primary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  stepNumberText: {
+    color: theme.colors.text.inverse,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.bold,
+  },
+  stepContent: {
+    flex: 1,
+  },
+  stepTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: 4,
+  },
+  stepDesc: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 18,
+  },
+  statusCard: {
+  },
+  statusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.md,
+  },
+  statusInfo: {
+    flex: 1,
   },
   statusLabel: {
-    color: '#856404',
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.tertiary,
+    marginBottom: 2,
   },
-  button: {
-    backgroundColor: '#28A745',
-    padding: 15,
-    borderRadius: 8,
+  statusValue: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+  },
+  statusBadge: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    gap: theme.spacing.xs,
+    backgroundColor: `${theme.colors.warning}20`,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.full,
+    alignSelf: 'flex-start',
   },
-  buttonDisabled: {
-    opacity: 0.6,
+  statusBadgeText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.warning,
+    fontWeight: theme.fontWeight.semibold,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  cancelButton: {
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  cancelButtonText: {
-    color: '#DC3545',
-    fontSize: 16,
+  bottomSpacing: {
+    height: theme.spacing.lg,
   },
 });
