@@ -8,9 +8,44 @@ import { Card } from '@/components/ui/Card';
 import { theme } from '@/constants/Theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useNotifications } from '@/contexts/NotificationContext';
+import { useEffect } from 'react';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function ProfileScreen() {
-  const { user, logout } = useAuth();
+  const { user, logout, token } = useAuth();
+  const {
+    notifications,
+    unreadCount,
+    registerForPushNotifications,
+    markAsRead,
+    markAllAsRead
+  } = useNotifications();
+
+  useEffect(() => {
+    if (user?.role === 'professional') {
+      setupPushNotifications();
+    }
+  }, [user]);
+
+  const setupPushNotifications = async () => {
+    const pushToken = await registerForPushNotifications();
+    if (pushToken && token) {
+      try {
+        await fetch(`${API_URL}/api/auth/push-token`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ pushToken }),
+        });
+      } catch (error) {
+        console.error('Error registering push token:', error);
+      }
+    }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -89,10 +124,10 @@ export default function ProfileScreen() {
           <Card style={styles.infoCard}>
             <View style={styles.infoRow}>
               <View style={styles.iconContainer}>
-                <Ionicons 
-                  name={isProfessional ? "briefcase-outline" : "person-outline"} 
-                  size={24} 
-                  color={theme.colors.primary} 
+                <Ionicons
+                  name={isProfessional ? "briefcase-outline" : "person-outline"}
+                  size={24}
+                  color={theme.colors.primary}
                 />
               </View>
               <View style={styles.infoContent}>
@@ -104,6 +139,39 @@ export default function ProfileScreen() {
             </View>
           </Card>
         </View>
+
+        {isProfessional && notifications.length > 0 && (
+          <View style={styles.notificationsSection}>
+            <View style={styles.notificationsHeader}>
+              <ThemedText style={styles.sectionTitle}>
+                Notificações {unreadCount > 0 && `(${unreadCount})`}
+              </ThemedText>
+              {unreadCount > 0 && (
+                <TouchableOpacity onPress={markAllAsRead}>
+                  <ThemedText style={styles.markAllRead}>Marcar todas como lidas</ThemedText>
+                </TouchableOpacity>
+              )}
+            </View>
+
+            {notifications.map((notification) => (
+              <TouchableOpacity
+                key={notification.id}
+                onPress={() => !notification.read && markAsRead(notification.id)}
+              >
+                <Card style={[styles.notificationCard, !notification.read && styles.unreadNotification]}>
+                  <View style={styles.notificationContent}>
+                    <ThemedText style={styles.notificationTitle}>{notification.title}</ThemedText>
+                    <ThemedText style={styles.notificationMessage}>{notification.message}</ThemedText>
+                    <ThemedText style={styles.notificationDate}>
+                      {new Date(notification.createdAt).toLocaleString('pt-BR')}
+                    </ThemedText>
+                  </View>
+                  {!notification.read && <View style={styles.unreadDot} />}
+                </Card>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
 
         {isProfessional && (
           <View style={styles.section}>
@@ -124,7 +192,7 @@ export default function ProfileScreen() {
 
         <View style={styles.section}>
           <ThemedText style={styles.sectionTitle}>Configurações</ThemedText>
-          
+
           <Button
             title="Sair da Conta"
             onPress={handleLogout}
@@ -214,10 +282,12 @@ const styles = StyleSheet.create({
   },
   infoCard: {
     marginBottom: theme.spacing.md,
+    padding: theme.spacing.lg,
   },
   infoRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing.lg,
   },
   iconContainer: {
     width: 48,
@@ -230,6 +300,7 @@ const styles = StyleSheet.create({
   },
   infoContent: {
     flex: 1,
+    marginLeft: theme.spacing.md,
   },
   infoLabel: {
     fontSize: theme.fontSize.sm,
@@ -263,8 +334,56 @@ const styles = StyleSheet.create({
     color: theme.colors.text.secondary,
     lineHeight: 20,
   },
+  notificationsSection: {
+    marginBottom: theme.spacing.lg,
+  },
+  notificationsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+  },
+  markAllRead: {
+    fontSize: 14,
+    color: theme.colors.primary,
+  },
+  notificationCard: {
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
+  },
+  unreadNotification: {
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.primary,
+  },
+  notificationContent: {
+    flex: 1,
+    marginLeft: theme.spacing.md,
+  },
+  notificationTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  notificationMessage: {
+    fontSize: 14,
+    opacity: 0.8,
+    marginBottom: 4,
+  },
+  notificationDate: {
+    fontSize: 12,
+    opacity: 0.6,
+  },
+  unreadDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: theme.colors.primary,
+    marginLeft: theme.spacing.sm,
+  },
   logoutButton: {
     borderColor: theme.colors.error,
+    marginTop: 32,
+    marginBottom: 32,
   },
   footer: {
     alignItems: 'center',

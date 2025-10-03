@@ -8,6 +8,18 @@ export const users = pgTable('users', {
   phone: varchar('phone', { length: 20 }).notNull(),
   password: text('password').notNull(),
   role: text('role').notNull().default('client'),
+  pushToken: text('push_token'),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const notifications = pgTable('notifications', {
+  id: serial('id').primaryKey(),
+  userId: integer('user_id').references(() => users.id).notNull(),
+  title: text('title').notNull(),
+  message: text('message').notNull(),
+  type: text('type').notNull(),
+  read: boolean('read').notNull().default(false),
+  data: text('data'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
@@ -46,6 +58,14 @@ export const usersRelations = relations(users, ({ many }) => ({
   servicesOffered: many(services),
   businessHours: many(businessHours),
   clientAppointments: many(appointments),
+  notifications: many(notifications),
+}));
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, {
+    fields: [notifications.userId],
+    references: [users.id],
+  }),
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
@@ -86,3 +106,5 @@ export type BusinessHour = typeof businessHours.$inferSelect;
 export type InsertBusinessHour = typeof businessHours.$inferInsert;
 export type Appointment = typeof appointments.$inferSelect;
 export type InsertAppointment = typeof appointments.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;

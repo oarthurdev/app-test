@@ -2,11 +2,12 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { db } from './db';
-import { users, services, businessHours, appointments } from '../shared/schema';
-import { eq, and, gte, lte } from 'drizzle-orm';
+import { users, services, businessHours, appointments, notifications } from '../shared/schema';
+import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { hashPassword, comparePassword, generateToken, authenticateToken, requireRole, AuthRequest } from './auth';
 import Stripe from 'stripe';
 import twilio from 'twilio';
+import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 
 dotenv.config();
 
@@ -22,6 +23,8 @@ const twilioClient = twilio(
   process.env.TWILIO_ACCOUNT_SID,
   process.env.TWILIO_AUTH_TOKEN
 );
+
+const expo = new Expo();
 
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -128,6 +131,26 @@ app.get('/api/auth/me', authenticateToken, async (req: AuthRequest, res) => {
   } catch (error) {
     console.error('Erro ao buscar usuário:', error);
     res.status(500).json({ error: 'Erro ao buscar usuário' });
+  }
+});
+
+app.post('/api/auth/push-token', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { pushToken } = req.body;
+
+    if (!Expo.isExpoPushToken(pushToken)) {
+      return res.status(400).json({ error: 'Token de push inválido' });
+    }
+
+    await db
+      .update(users)
+      .set({ pushToken })
+      .where(eq(users.id, req.userId!));
+
+    res.json({ message: 'Token de push registrado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao registrar token de push:', error);
+    res.status(500).json({ error: 'Erro ao registrar token de push' });
   }
 });
 
@@ -270,6 +293,53 @@ app.get('/api/appointments/available', async (req, res) => {
   }
 });
 
+async function sendPushNotification(userId: number, title: string, message: string, data?: any) {
+  try {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (user?.pushToken && Expo.isExpoPushToken(user.pushToken)) {
+      const pushMessage: ExpoPushMessage = {
+        to: user.pushToken,
+        sound: 'default',
+        title,
+        body: message,
+        data: data || {},
+      };
+
+      const chunks = expo.chunkPushNotifications([pushMessage]);
+      for (const chunk of chunks) {
+        try {
+          await expo.sendPushNotificationsAsync(chunk);
+        } catch (error) {
+          console.error('Erro ao enviar push notification:', error);
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao processar push notification:', error);
+  }
+}
+
+async function createNotification(userId: number, title: string, message: string, type: string, data?: any) {
+  try {
+    await db.insert(notifications).values({
+      userId,
+      title,
+      message,
+      type,
+      data: data ? JSON.stringify(data) : null,
+    });
+
+    await sendPushNotification(userId, title, message, data);
+  } catch (error) {
+    console.error('Erro ao criar notificação:', error);
+  }
+}
+
 app.post('/api/appointments', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { serviceId, appointmentDate } = req.body;
@@ -310,6 +380,32 @@ app.post('/api/appointments', authenticateToken, async (req: AuthRequest, res) =
         paymentStatus: 'pending',
       })
       .returning();
+
+    const [client] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.userId!))
+      .limit(1);
+
+    const appointmentDateFormatted = new Date(appointmentDate).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    await createNotification(
+      service.professionalId,
+      'Novo Agendamento',
+      `${client?.name} agendou ${service.name} para ${appointmentDateFormatted}`,
+      'new_appointment',
+      {
+        appointmentId: newAppointment.id,
+        serviceId: service.id,
+        clientId: req.userId,
+      }
+    );
 
     res.json(newAppointment);
   } catch (error) {
@@ -455,6 +551,60 @@ app.get('/api/appointments/my', authenticateToken, async (req: AuthRequest, res)
   } catch (error) {
     console.error('Erro ao buscar agendamentos:', error);
     res.status(500).json({ error: 'Erro ao buscar agendamentos' });
+  }
+});
+
+app.get('/api/notifications', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const userNotifications = await db
+      .select()
+      .from(notifications)
+      .where(eq(notifications.userId, req.userId!))
+      .orderBy(desc(notifications.createdAt))
+      .limit(50);
+
+    res.json(userNotifications.map(n => ({
+      ...n,
+      data: n.data ? JSON.parse(n.data) : null,
+    })));
+  } catch (error) {
+    console.error('Erro ao buscar notificações:', error);
+    res.status(500).json({ error: 'Erro ao buscar notificações' });
+  }
+});
+
+app.put('/api/notifications/:id/read', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const notificationId = Number(req.params.id);
+
+    await db
+      .update(notifications)
+      .set({ read: true })
+      .where(
+        and(
+          eq(notifications.id, notificationId),
+          eq(notifications.userId, req.userId!)
+        )
+      );
+
+    res.json({ message: 'Notificação marcada como lida' });
+  } catch (error) {
+    console.error('Erro ao marcar notificação como lida:', error);
+    res.status(500).json({ error: 'Erro ao marcar notificação como lida' });
+  }
+});
+
+app.put('/api/notifications/read-all', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    await db
+      .update(notifications)
+      .set({ read: true })
+      .where(eq(notifications.userId, req.userId!));
+
+    res.json({ message: 'Todas as notificações marcadas como lidas' });
+  } catch (error) {
+    console.error('Erro ao marcar notificações como lidas:', error);
+    res.status(500).json({ error: 'Erro ao marcar notificações como lidas' });
   }
 });
 

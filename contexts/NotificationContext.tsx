@@ -1,0 +1,166 @@
+
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
+import { useAuth } from './AuthContext';
+
+interface Notification {
+  id: number;
+  title: string;
+  message: string;
+  type: string;
+  read: boolean;
+  createdAt: string;
+  data?: any;
+}
+
+interface NotificationContextType {
+  notifications: Notification[];
+  unreadCount: number;
+  registerForPushNotifications: () => Promise<string | null>;
+  markAsRead: (notificationId: number) => void;
+  markAllAsRead: () => void;
+  loadNotifications: () => Promise<void>;
+}
+
+const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true,
+  }),
+});
+
+export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { token, user } = useAuth();
+
+  useEffect(() => {
+    if (user?.role === 'professional' && token) {
+      loadNotifications();
+      const interval = setInterval(loadNotifications, 30000); // Poll every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [user, token]);
+
+  useEffect(() => {
+    const count = notifications.filter(n => !n.read).length;
+    setUnreadCount(count);
+  }, [notifications]);
+
+  const registerForPushNotifications = async (): Promise<string | null> => {
+    try {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+
+      if (finalStatus !== 'granted') {
+        console.log('Failed to get push token for push notification!');
+        return null;
+      }
+
+      const token = (await Notifications.getExpoPushTokenAsync()).data;
+      
+      if (Platform.OS === 'android') {
+        Notifications.setNotificationChannelAsync('default', {
+          name: 'default',
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: '#FF231F7C',
+        });
+      }
+
+      return token;
+    } catch (error) {
+      console.error('Error registering for push notifications:', error);
+      return null;
+    }
+  };
+
+  const loadNotifications = async () => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/notifications`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  };
+
+  const markAsRead = async (notificationId: number) => {
+    if (!token) return;
+
+    try {
+      await fetch(`${API_URL}/api/notifications/${notificationId}/read`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setNotifications(prev =>
+        prev.map(n => n.id === notificationId ? { ...n, read: true } : n)
+      );
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!token) return;
+
+    try {
+      await fetch(`${API_URL}/api/notifications/read-all`, {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
+  return (
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        registerForPushNotifications,
+        markAsRead,
+        markAllAsRead,
+        loadNotifications,
+      }}
+    >
+      {children}
+    </NotificationContext.Provider>
+  );
+}
+
+export function useNotifications() {
+  const context = useContext(NotificationContext);
+  if (context === undefined) {
+    throw new Error('useNotifications deve ser usado dentro de um NotificationProvider');
+  }
+  return context;
+}
