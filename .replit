@@ -103,3 +103,8 @@ outputType = "webview"
 
 [agent]
 expertMode = true
+
+[deployment]
+deploymentTarget = "vm"
+run = ["bash", "-c", "npm run server & npx expo start --web --port 5000"]
+build = ["npm", "install"]
