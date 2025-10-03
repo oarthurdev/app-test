@@ -67,10 +67,18 @@ As seguintes variáveis já estão configuradas no Replit Secrets:
 - `EXPO_PUBLIC_API_URL`: URL da API
 
 ## Scripts Disponíveis
-- `npm run server`: Inicia o servidor backend
+- `npm run server`: Inicia o servidor backend na porta 3001
 - `npm run db:push`: Sincroniza schema com banco de dados
 - `npm run db:seed`: Cria usuário profissional de teste
 - `npm start`: Inicia o Expo
+
+## Configuração do Replit
+- **Backend**: Rodando na porta 3001 (localhost)
+- **Frontend**: Expo web rodando na porta 5000 (0.0.0.0)
+- **Database**: PostgreSQL configurado via DATABASE_URL
+- **Workflows**: 
+  - Backend: `npm run server` (porta 3001)
+  - Frontend: `EXPO_METRO_PORT=5000 npx expo start --web --port 5000` (porta 5000)
 
 ## Características Implementadas
 - ✅ Login e registro com validação
