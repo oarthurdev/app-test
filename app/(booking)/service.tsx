@@ -154,7 +154,7 @@ export default function ServiceBookingScreen() {
   }
 
   const today = new Date().toISOString().split('T')[0];
-  const selectedDateObj = selectedDate ? new Date(selectedDate) : null;
+  const selectedDateObj = selectedDate ? new Date(selectedDate + 'T00:00:00') : null;
 
   return (
     <ThemedView style={styles.container}>
