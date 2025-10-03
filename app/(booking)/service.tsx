@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, View, Alert } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
@@ -5,6 +6,9 @@ import { Calendar, DateData } from 'react-native-calendars';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/contexts/AuthContext';
+import { Card } from '@/components/ui/Card';
+import { theme } from '@/constants/Theme';
+import { Ionicons } from '@expo/vector-icons';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
@@ -33,7 +37,6 @@ export default function ServiceBookingScreen() {
   const [availableTimes, setAvailableTimes] = useState<string[]>([]);
   const [bookedTimes, setBookedTimes] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
-  const [businessHours, setBusinessHours] = useState<BusinessHour[]>([]);
 
   useEffect(() => {
     loadService();
@@ -137,7 +140,7 @@ export default function ServiceBookingScreen() {
   if (loading) {
     return (
       <ThemedView style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#007AFF" />
+        <ActivityIndicator size="large" color={theme.colors.primary} />
       </ThemedView>
     );
   }
@@ -151,23 +154,34 @@ export default function ServiceBookingScreen() {
   }
 
   const today = new Date().toISOString().split('T')[0];
+  const selectedDateObj = selectedDate ? new Date(selectedDate) : null;
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <View style={styles.serviceInfo}>
-          <ThemedText type="title">{service.name}</ThemedText>
-          {service.description && (
-            <ThemedText style={styles.description}>{service.description}</ThemedText>
-          )}
-          <ThemedText style={styles.price}>R$ {parseFloat(service.price).toFixed(2)}</ThemedText>
-          <ThemedText style={styles.duration}>Duração: {service.duration} min</ThemedText>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <Ionicons name="chevron-back" size={24} color={theme.colors.text.primary} />
+        </TouchableOpacity>
+        <View style={styles.headerContent}>
+          <ThemedText style={styles.headerTitle}>Data e hora</ThemedText>
+          <ThemedText style={styles.headerSubtitle}>{service.professionalName}</ThemedText>
         </View>
+      </View>
 
-        <View style={styles.calendarContainer}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Escolha a data
-          </ThemedText>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <Card style={styles.serviceCard}>
+          <ThemedText style={styles.serviceName}>{service.name}</ThemedText>
+          {service.description && (
+            <ThemedText style={styles.serviceDescription}>{service.description}</ThemedText>
+          )}
+          <View style={styles.serviceDetails}>
+            <ThemedText style={styles.servicePrice}>
+              de R$ {parseFloat(service.price).toFixed(2)}, {service.duration} min
+            </ThemedText>
+          </View>
+        </Card>
+
+        <Card style={styles.calendarCard}>
           <Calendar
             onDayPress={(day: DateData) => {
               setSelectedDate(day.dateString);
@@ -176,27 +190,48 @@ export default function ServiceBookingScreen() {
             markedDates={{
               [selectedDate]: {
                 selected: true,
-                selectedColor: '#007AFF',
+                selectedColor: theme.colors.primary,
               },
             }}
             minDate={today}
             theme={{
-              selectedDayBackgroundColor: '#007AFF',
-              todayTextColor: '#007AFF',
-              arrowColor: '#007AFF',
+              selectedDayBackgroundColor: theme.colors.primary,
+              selectedDayTextColor: '#ffffff',
+              todayTextColor: theme.colors.primary,
+              dayTextColor: theme.colors.text.primary,
+              textDisabledColor: theme.colors.text.tertiary,
+              monthTextColor: theme.colors.text.primary,
+              textMonthFontWeight: 'bold',
+              textDayFontSize: 16,
+              textMonthFontSize: 18,
+              arrowColor: theme.colors.primary,
             }}
+            style={styles.calendar}
           />
-        </View>
+        </Card>
+
+        {selectedDate && selectedDateObj && (
+          <View style={styles.dateLabel}>
+            <ThemedText style={styles.dateLabelText}>
+              {selectedDateObj.toLocaleDateString('pt-BR', {
+                weekday: 'long',
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+              })}
+            </ThemedText>
+          </View>
+        )}
 
         {selectedDate && (
-          <View style={styles.timeContainer}>
-            <ThemedText type="subtitle" style={styles.sectionTitle}>
-              Escolha o horário
-            </ThemedText>
+          <View style={styles.timesContainer}>
             {availableTimes.length === 0 ? (
-              <ThemedText style={styles.noTimes}>
-                Não há horários disponíveis para esta data
-              </ThemedText>
+              <Card style={styles.noTimesCard}>
+                <Ionicons name="calendar-outline" size={48} color={theme.colors.text.tertiary} />
+                <ThemedText style={styles.noTimesText}>
+                  Não há horários disponíveis para esta data
+                </ThemedText>
+              </Card>
             ) : (
               <View style={styles.timesGrid}>
                 {availableTimes.map((time) => {
@@ -211,6 +246,7 @@ export default function ServiceBookingScreen() {
                       ]}
                       onPress={() => handleTimeSelect(time)}
                       disabled={booked}
+                      activeOpacity={0.7}
                     >
                       <ThemedText
                         style={[
@@ -228,13 +264,16 @@ export default function ServiceBookingScreen() {
             )}
           </View>
         )}
+      </ScrollView>
 
-        {selectedDate && selectedTime && (
+      {selectedDate && selectedTime && (
+        <View style={styles.footer}>
           <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
             <ThemedText style={styles.continueButtonText}>Continuar</ThemedText>
+            <Ionicons name="arrow-forward" size={20} color="#fff" />
           </TouchableOpacity>
-        )}
-      </ScrollView>
+        </View>
+      )}
     </ThemedView>
   );
 }
@@ -242,111 +281,151 @@ export default function ServiceBookingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background.secondary,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 60,
+    paddingHorizontal: theme.spacing.lg,
+    paddingBottom: theme.spacing.lg,
+    backgroundColor: '#d4a5a5',
+  },
+  backButton: {
+    marginRight: theme.spacing.md,
+  },
+  headerContent: {
+    flex: 1,
+  },
+  headerTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+  },
+  headerSubtitle: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginTop: 2,
+  },
   scrollContent: {
-    padding: 20,
+    padding: theme.spacing.lg,
   },
-  serviceInfo: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  serviceCard: {
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.lg,
   },
-  description: {
-    marginTop: 10,
-    opacity: 0.7,
+  serviceName: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
   },
-  price: {
-    marginTop: 10,
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#007AFF',
+  serviceDescription: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.sm,
   },
-  duration: {
-    marginTop: 5,
-    opacity: 0.7,
+  serviceDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  calendarContainer: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  servicePrice: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
   },
-  sectionTitle: {
-    marginBottom: 15,
+  calendarCard: {
+    marginBottom: theme.spacing.md,
+    padding: 0,
+    overflow: 'hidden',
   },
-  timeContainer: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+  calendar: {
+    borderRadius: theme.borderRadius.lg,
   },
-  noTimes: {
+  dateLabel: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  dateLabelText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    textTransform: 'capitalize',
+  },
+  timesContainer: {
+    marginBottom: 80,
+  },
+  noTimesCard: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xxl,
+  },
+  noTimesText: {
+    marginTop: theme.spacing.md,
     textAlign: 'center',
-    opacity: 0.7,
-    paddingVertical: 20,
+    color: theme.colors.text.secondary,
   },
   timesGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: theme.spacing.sm,
   },
   timeButton: {
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background.primary,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: theme.colors.border.light,
+    minWidth: 90,
+    alignItems: 'center',
   },
   timeButtonSelected: {
-    backgroundColor: '#007AFF',
-    borderColor: '#007AFF',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primary,
   },
   timeButtonBooked: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: theme.colors.background.tertiary,
     opacity: 0.5,
   },
   timeButtonText: {
-    fontSize: 14,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.primary,
+    fontWeight: theme.fontWeight.medium,
   },
   timeButtonTextSelected: {
     color: '#fff',
-    fontWeight: 'bold',
+    fontWeight: theme.fontWeight.bold,
   },
   timeButtonTextBooked: {
     textDecorationLine: 'line-through',
+    color: theme.colors.text.tertiary,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: theme.spacing.lg,
+    backgroundColor: theme.colors.background.primary,
+    borderTopWidth: 1,
+    borderTopColor: theme.colors.border.light,
   },
   continueButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'center',
+    backgroundColor: '#d4a5a5',
+    paddingVertical: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    gap: theme.spacing.sm,
   },
   continueButtonText: {
     color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
   },
 });

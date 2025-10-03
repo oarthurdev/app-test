@@ -35,8 +35,8 @@ export default function AdminScreen() {
   const [servicePrice, setServicePrice] = useState('');
   const [serviceDuration, setServiceDuration] = useState('');
   
-  // Business hours form states
-  const [selectedDay, setSelectedDay] = useState(1);
+  // Business hours form states - múltiplos dias
+  const [selectedDays, setSelectedDays] = useState<number[]>([]);
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   
@@ -55,6 +55,30 @@ export default function AdminScreen() {
       </ThemedView>
     );
   }
+
+  const toggleDay = (day: number) => {
+    if (selectedDays.includes(day)) {
+      setSelectedDays(selectedDays.filter(d => d !== day));
+    } else {
+      setSelectedDays([...selectedDays, day].sort());
+    }
+  };
+
+  const selectWeekdays = () => {
+    setSelectedDays([1, 2, 3, 4, 5]);
+  };
+
+  const selectWeekend = () => {
+    setSelectedDays([0, 6]);
+  };
+
+  const selectAllDays = () => {
+    setSelectedDays([0, 1, 2, 3, 4, 5, 6]);
+  };
+
+  const clearDays = () => {
+    setSelectedDays([]);
+  };
 
   const handleAddService = async () => {
     if (!serviceName || !servicePrice || !serviceDuration) {
@@ -106,20 +130,23 @@ export default function AdminScreen() {
     }
   };
 
-  const handleAddBusinessHour = async () => {
+  const handleAddBusinessHours = async () => {
+    if (selectedDays.length === 0) {
+      Alert.alert('Selecione os dias', 'Escolha pelo menos um dia da semana');
+      return;
+    }
+
     if (!startTime || !endTime) {
       Alert.alert('Campos obrigatórios', 'Preencha os horários de início e fim');
       return;
     }
 
-    // Validate time format
     const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
     if (!timeRegex.test(startTime) || !timeRegex.test(endTime)) {
       Alert.alert('Formato inválido', 'Use o formato HH:MM (ex: 09:00)');
       return;
     }
 
-    // Validate that end time is after start time
     const [startH, startM] = startTime.split(':').map(Number);
     const [endH, endM] = endTime.split(':').map(Number);
     const startMinutes = startH * 60 + startM;
@@ -132,24 +159,37 @@ export default function AdminScreen() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/business-hours`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          dayOfWeek: selectedDay,
-          startTime,
-          endTime,
-        }),
-      });
+      const promises = selectedDays.map(day =>
+        fetch(`${API_URL}/api/business-hours`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            dayOfWeek: day,
+            startTime,
+            endTime,
+          }),
+        })
+      );
 
-      if (!response.ok) {
-        throw new Error('Erro ao cadastrar horário');
+      const responses = await Promise.all(promises);
+      const failedDays = responses.filter(r => !r.ok);
+
+      if (failedDays.length > 0) {
+        Alert.alert(
+          'Atenção',
+          `${selectedDays.length - failedDays.length} horários cadastrados com sucesso. ${failedDays.length} falharam (podem já existir).`
+        );
+      } else {
+        Alert.alert(
+          'Sucesso! 🎉',
+          `${selectedDays.length} horários cadastrados com sucesso!`
+        );
       }
 
-      Alert.alert('Sucesso! 🎉', 'Horário cadastrado com sucesso!');
+      setSelectedDays([]);
       setStartTime('');
       setEndTime('');
     } catch (error: any) {
@@ -309,10 +349,10 @@ export default function AdminScreen() {
             <Card style={styles.infoCard}>
               <View style={styles.infoHeader}>
                 <Ionicons name="information-circle" size={24} color={theme.colors.primary} />
-                <ThemedText style={styles.infoTitle}>Como funciona?</ThemedText>
+                <ThemedText style={styles.infoTitle}>Cadastro Rápido!</ThemedText>
               </View>
               <ThemedText style={styles.infoText}>
-                Configure seus horários de atendimento por dia da semana. Você pode ter horários diferentes para cada dia.
+                Agora você pode selecionar múltiplos dias de uma vez e criar todos os horários simultaneamente. Muito mais rápido! 🚀
               </ThemedText>
             </Card>
 
@@ -327,7 +367,51 @@ export default function AdminScreen() {
                   <ThemedText style={styles.stepNumber}>1</ThemedText>
                 </View>
                 <View style={styles.stepContent}>
-                  <ThemedText style={styles.stepTitle}>Selecione o dia da semana</ThemedText>
+                  <ThemedText style={styles.stepTitle}>Selecione os dias</ThemedText>
+                  
+                  <View style={styles.quickSelectContainer}>
+                    <ThemedText style={styles.quickSelectLabel}>Seleção rápida:</ThemedText>
+                    <View style={styles.quickSelectButtons}>
+                      <TouchableOpacity
+                        style={styles.quickSelectButton}
+                        onPress={selectWeekdays}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="briefcase-outline" size={16} color={theme.colors.primary} />
+                        <ThemedText style={styles.quickSelectButtonText}>Seg-Sex</ThemedText>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={styles.quickSelectButton}
+                        onPress={selectWeekend}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="sunny-outline" size={16} color={theme.colors.primary} />
+                        <ThemedText style={styles.quickSelectButtonText}>Fim de Semana</ThemedText>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={styles.quickSelectButton}
+                        onPress={selectAllDays}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="checkmark-circle-outline" size={16} color={theme.colors.primary} />
+                        <ThemedText style={styles.quickSelectButtonText}>Todos</ThemedText>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={styles.quickSelectButton}
+                        onPress={clearDays}
+                        activeOpacity={0.7}
+                      >
+                        <Ionicons name="close-circle-outline" size={16} color={theme.colors.error} />
+                        <ThemedText style={[styles.quickSelectButtonText, { color: theme.colors.error }]}>
+                          Limpar
+                        </ThemedText>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  
                   <ScrollView 
                     horizontal 
                     showsHorizontalScrollIndicator={false} 
@@ -339,15 +423,15 @@ export default function AdminScreen() {
                         key={day.value}
                         style={[
                           styles.dayButton,
-                          selectedDay === day.value && styles.dayButtonSelected,
+                          selectedDays.includes(day.value) && styles.dayButtonSelected,
                         ]}
-                        onPress={() => setSelectedDay(day.value)}
+                        onPress={() => toggleDay(day.value)}
                         activeOpacity={0.7}
                       >
                         <ThemedText
                           style={[
                             styles.dayButtonText,
-                            selectedDay === day.value && styles.dayButtonTextSelected,
+                            selectedDays.includes(day.value) && styles.dayButtonTextSelected,
                           ]}
                         >
                           {day.label}
@@ -356,12 +440,16 @@ export default function AdminScreen() {
                     ))}
                   </ScrollView>
 
-                  <View style={styles.selectedDayBanner}>
-                    <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
-                    <ThemedText style={styles.selectedDayText}>
-                      {DAYS_OF_WEEK.find((d) => d.value === selectedDay)?.fullLabel}
-                    </ThemedText>
-                  </View>
+                  {selectedDays.length > 0 && (
+                    <View style={styles.selectedDaysBanner}>
+                      <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
+                      <ThemedText style={styles.selectedDaysText}>
+                        {selectedDays.length} {selectedDays.length === 1 ? 'dia selecionado' : 'dias selecionados'}:
+                        {' '}
+                        {selectedDays.map(d => DAYS_OF_WEEK.find(day => day.value === d)?.label).join(', ')}
+                      </ThemedText>
+                    </View>
+                  )}
                 </View>
               </View>
 
@@ -415,12 +503,13 @@ export default function AdminScreen() {
 
               <View style={styles.buttonContainer}>
                 <Button
-                  title="Adicionar Horário"
-                  onPress={handleAddBusinessHour}
+                  title={`Adicionar Horário (${selectedDays.length} ${selectedDays.length === 1 ? 'dia' : 'dias'})`}
+                  onPress={handleAddBusinessHours}
                   loading={loading}
                   fullWidth
                   size="lg"
                   variant="secondary"
+                  disabled={selectedDays.length === 0}
                 />
               </View>
             </Card>
@@ -617,6 +706,35 @@ const styles = StyleSheet.create({
     backgroundColor: theme.colors.border.light,
     marginVertical: theme.spacing.xl,
   },
+  quickSelectContainer: {
+    marginBottom: theme.spacing.md,
+  },
+  quickSelectLabel: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.sm,
+  },
+  quickSelectButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+  },
+  quickSelectButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.md,
+    paddingVertical: theme.spacing.sm,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background.tertiary,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+  },
+  quickSelectButtonText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.medium,
+  },
   dayScroll: {
     marginBottom: theme.spacing.md,
   },
@@ -645,9 +763,9 @@ const styles = StyleSheet.create({
   dayButtonTextSelected: {
     color: theme.colors.text.inverse,
   },
-  selectedDayBanner: {
+  selectedDaysBanner: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     gap: theme.spacing.sm,
     backgroundColor: `${theme.colors.success}15`,
     padding: theme.spacing.md,
@@ -655,8 +773,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: `${theme.colors.success}30`,
   },
-  selectedDayText: {
-    fontSize: theme.fontSize.md,
+  selectedDaysText: {
+    flex: 1,
+    fontSize: theme.fontSize.sm,
     color: theme.colors.success,
     fontWeight: theme.fontWeight.semibold,
   },
