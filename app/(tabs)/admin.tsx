@@ -1,19 +1,25 @@
-import { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert, View, ActivityIndicator } from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, ScrollView, TouchableOpacity, Alert, View } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Card } from '@/components/ui/Card';
+import { theme } from '@/constants/Theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 const DAYS_OF_WEEK = [
-  { value: 0, label: 'Domingo' },
-  { value: 1, label: 'Segunda-feira' },
-  { value: 2, label: 'Terça-feira' },
-  { value: 3, label: 'Quarta-feira' },
-  { value: 4, label: 'Quinta-feira' },
-  { value: 5, label: 'Sexta-feira' },
-  { value: 6, label: 'Sábado' },
+  { value: 0, label: 'Dom', fullLabel: 'Domingo' },
+  { value: 1, label: 'Seg', fullLabel: 'Segunda' },
+  { value: 2, label: 'Ter', fullLabel: 'Terça' },
+  { value: 3, label: 'Qua', fullLabel: 'Quarta' },
+  { value: 4, label: 'Qui', fullLabel: 'Quinta' },
+  { value: 5, label: 'Sex', fullLabel: 'Sexta' },
+  { value: 6, label: 'Sáb', fullLabel: 'Sábado' },
 ];
 
 export default function AdminScreen() {
@@ -31,7 +37,11 @@ export default function AdminScreen() {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.centerContainer}>
-          <ThemedText>Acesso negado. Apenas profissionais podem acessar esta página.</ThemedText>
+          <Ionicons name="lock-closed" size={64} color={theme.colors.text.tertiary} />
+          <ThemedText style={styles.accessDeniedTitle}>Acesso Restrito</ThemedText>
+          <ThemedText style={styles.accessDeniedText}>
+            Apenas profissionais podem acessar esta página
+          </ThemedText>
         </View>
       </ThemedView>
     );
@@ -63,7 +73,7 @@ export default function AdminScreen() {
         throw new Error('Erro ao cadastrar serviço');
       }
 
-      Alert.alert('Sucesso', 'Serviço cadastrado com sucesso!');
+      Alert.alert('Sucesso! 🎉', 'Serviço cadastrado com sucesso!');
       setServiceName('');
       setServiceDescription('');
       setServicePrice('');
@@ -100,7 +110,7 @@ export default function AdminScreen() {
         throw new Error('Erro ao cadastrar horário');
       }
 
-      Alert.alert('Sucesso', 'Horário cadastrado com sucesso!');
+      Alert.alert('Sucesso! 🎉', 'Horário cadastrado com sucesso!');
       setStartTime('');
       setEndTime('');
     } catch (error: any) {
@@ -112,116 +122,162 @@ export default function AdminScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.primaryDark]}
+        style={styles.headerGradient}
+      >
         <View style={styles.header}>
-          <ThemedText type="title">Admin</ThemedText>
-          <ThemedText style={styles.subtitle}>Gerenciar serviços e horários</ThemedText>
+          <View style={styles.headerIcon}>
+            <Ionicons name="settings" size={32} color={theme.colors.text.inverse} />
+          </View>
+          <ThemedText style={styles.title}>Painel Admin</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Gerencie seus serviços e horários
+          </ThemedText>
+        </View>
+      </LinearGradient>
+
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="briefcase-outline" size={24} color={theme.colors.primary} />
+            <ThemedText style={styles.sectionTitle}>Novo Serviço</ThemedText>
+          </View>
+
+          <Card style={styles.formCard}>
+            <Input
+              label="Nome do Serviço *"
+              placeholder="Ex: Corte de Cabelo"
+              value={serviceName}
+              onChangeText={setServiceName}
+              icon="cut-outline"
+            />
+
+            <Input
+              label="Descrição"
+              placeholder="Descreva seu serviço"
+              value={serviceDescription}
+              onChangeText={setServiceDescription}
+              multiline
+              numberOfLines={3}
+              icon="document-text-outline"
+            />
+
+            <View style={styles.row}>
+              <View style={styles.halfInput}>
+                <Input
+                  label="Preço (R$) *"
+                  placeholder="50.00"
+                  value={servicePrice}
+                  onChangeText={setServicePrice}
+                  keyboardType="decimal-pad"
+                  icon="cash-outline"
+                />
+              </View>
+              <View style={styles.halfInput}>
+                <Input
+                  label="Duração (min) *"
+                  placeholder="30"
+                  value={serviceDuration}
+                  onChangeText={setServiceDuration}
+                  keyboardType="number-pad"
+                  icon="time-outline"
+                />
+              </View>
+            </View>
+
+            <Button
+              title="Adicionar Serviço"
+              onPress={handleAddService}
+              loading={loading}
+              fullWidth
+              size="lg"
+            />
+          </Card>
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Cadastrar Serviço
-          </ThemedText>
+          <View style={styles.sectionHeader}>
+            <Ionicons name="calendar-outline" size={24} color={theme.colors.primary} />
+            <ThemedText style={styles.sectionTitle}>Horário de Funcionamento</ThemedText>
+          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Nome do serviço"
-            value={serviceName}
-            onChangeText={setServiceName}
-            placeholderTextColor="#999"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Descrição (opcional)"
-            value={serviceDescription}
-            onChangeText={setServiceDescription}
-            multiline
-            numberOfLines={3}
-            placeholderTextColor="#999"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Preço (ex: 50.00)"
-            value={servicePrice}
-            onChangeText={setServicePrice}
-            keyboardType="decimal-pad"
-            placeholderTextColor="#999"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Duração em minutos (ex: 30)"
-            value={serviceDuration}
-            onChangeText={setServiceDuration}
-            keyboardType="number-pad"
-            placeholderTextColor="#999"
-          />
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleAddService}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <ThemedText style={styles.buttonText}>Cadastrar Serviço</ThemedText>
-            )}
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.section}>
-          <ThemedText type="subtitle" style={styles.sectionTitle}>
-            Cadastrar Horário de Funcionamento
-          </ThemedText>
-
-          <View style={styles.pickerContainer}>
-            <ThemedText style={styles.label}>Dia da semana:</ThemedText>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.dayScroll}>
+          <Card style={styles.formCard}>
+            <View style={styles.labelContainer}>
+              <ThemedText style={styles.label}>Dia da Semana</ThemedText>
+            </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              style={styles.dayScroll}
+              contentContainerStyle={styles.dayScrollContent}
+            >
               {DAYS_OF_WEEK.map((day) => (
                 <TouchableOpacity
                   key={day.value}
-                  style={[styles.dayButton, selectedDay === day.value && styles.dayButtonSelected]}
+                  style={[
+                    styles.dayButton,
+                    selectedDay === day.value && styles.dayButtonSelected,
+                  ]}
                   onPress={() => setSelectedDay(day.value)}
+                  activeOpacity={0.7}
                 >
-                  <ThemedText style={[styles.dayButtonText, selectedDay === day.value && styles.dayButtonTextSelected]}>
-                    {day.label.substring(0, 3)}
+                  <ThemedText
+                    style={[
+                      styles.dayButtonText,
+                      selectedDay === day.value && styles.dayButtonTextSelected,
+                    ]}
+                  >
+                    {day.label}
                   </ThemedText>
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Horário inicial (ex: 09:00)"
-            value={startTime}
-            onChangeText={setStartTime}
-            placeholderTextColor="#999"
-          />
+            <View style={styles.selectedDayInfo}>
+              <Ionicons name="checkmark-circle" size={20} color={theme.colors.success} />
+              <ThemedText style={styles.selectedDayText}>
+                {DAYS_OF_WEEK.find((d) => d.value === selectedDay)?.fullLabel}
+              </ThemedText>
+            </View>
 
-          <TextInput
-            style={styles.input}
-            placeholder="Horário final (ex: 18:00)"
-            value={endTime}
-            onChangeText={setEndTime}
-            placeholderTextColor="#999"
-          />
+            <View style={styles.row}>
+              <View style={styles.halfInput}>
+                <Input
+                  label="Horário Inicial *"
+                  placeholder="09:00"
+                  value={startTime}
+                  onChangeText={setStartTime}
+                  icon="play-outline"
+                />
+              </View>
+              <View style={styles.halfInput}>
+                <Input
+                  label="Horário Final *"
+                  placeholder="18:00"
+                  value={endTime}
+                  onChangeText={setEndTime}
+                  icon="stop-outline"
+                />
+              </View>
+            </View>
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleAddBusinessHour}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <ThemedText style={styles.buttonText}>Cadastrar Horário</ThemedText>
-            )}
-          </TouchableOpacity>
+            <Button
+              title="Adicionar Horário"
+              onPress={handleAddBusinessHour}
+              loading={loading}
+              fullWidth
+              size="lg"
+              variant="secondary"
+            />
+          </Card>
         </View>
+
+        <View style={styles.bottomSpacing} />
       </ScrollView>
     </ThemedView>
   );
@@ -230,86 +286,129 @@ export default function AdminScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background.secondary,
   },
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: theme.spacing.xl,
   },
-  scrollContent: {
-    padding: 20,
+  accessDeniedTitle: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+  },
+  accessDeniedText: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.secondary,
+    textAlign: 'center',
+  },
+  headerGradient: {
+    paddingTop: 60,
+    paddingBottom: theme.spacing.xl,
   },
   header: {
-    paddingTop: 40,
-    marginBottom: 20,
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  headerIcon: {
+    marginBottom: theme.spacing.md,
+  },
+  title: {
+    fontSize: theme.fontSize.xxxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.inverse,
+    marginBottom: theme.spacing.xs,
   },
   subtitle: {
-    marginTop: 5,
-    opacity: 0.7,
+    fontSize: theme.fontSize.md,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
+  },
+  content: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: theme.spacing.lg,
   },
   section: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginTop: theme.spacing.xl,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   sectionTitle: {
-    marginBottom: 15,
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
   },
-  input: {
-    backgroundColor: '#f5f5f5',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
-    fontSize: 16,
+  formCard: {
+    padding: theme.spacing.lg,
   },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
+  row: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
   },
-  buttonDisabled: {
-    opacity: 0.6,
+  halfInput: {
+    flex: 1,
   },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  pickerContainer: {
-    marginBottom: 15,
+  labelContainer: {
+    marginBottom: theme.spacing.sm,
   },
   label: {
-    marginBottom: 10,
-    fontWeight: '600',
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.medium,
+    color: theme.colors.text.secondary,
   },
   dayScroll: {
-    flexDirection: 'row',
+    marginBottom: theme.spacing.md,
+  },
+  dayScrollContent: {
+    gap: theme.spacing.sm,
   },
   dayButton: {
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    borderRadius: 8,
-    backgroundColor: '#f5f5f5',
-    marginRight: 10,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background.tertiary,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    minWidth: 60,
+    alignItems: 'center',
   },
   dayButtonSelected: {
-    backgroundColor: '#007AFF',
+    backgroundColor: theme.colors.primary,
+    borderColor: theme.colors.primaryDark,
   },
   dayButtonText: {
-    fontSize: 14,
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.secondary,
   },
   dayButtonTextSelected: {
-    color: '#fff',
-    fontWeight: 'bold',
+    color: theme.colors.text.inverse,
+  },
+  selectedDayInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    backgroundColor: `${theme.colors.success}15`,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    marginBottom: theme.spacing.md,
+  },
+  selectedDayText: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.success,
+    fontWeight: theme.fontWeight.semibold,
+  },
+  bottomSpacing: {
+    height: theme.spacing.xxl,
   },
 });
