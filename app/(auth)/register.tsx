@@ -1,9 +1,12 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { theme } from '@/constants/Theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function RegisterScreen() {
   const [name, setName] = useState('');
@@ -46,78 +49,91 @@ export default function RegisterScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedView style={styles.content}>
-          <ThemedText type="title" style={styles.title}>Cadastro</ThemedText>
-          <ThemedText style={styles.subtitle}>Crie sua conta</ThemedText>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Nome completo"
-            value={name}
-            onChangeText={setName}
-            placeholderTextColor="#999"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholderTextColor="#999"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Telefone (ex: +5511999999999)"
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            placeholderTextColor="#999"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholderTextColor="#999"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmar senha"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            placeholderTextColor="#999"
-          />
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <ThemedText style={styles.buttonText}>Cadastrar</ThemedText>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => router.back()}
-          >
-            <ThemedText style={styles.linkText}>
-              Já tem conta? Faça login
+      <LinearGradient
+        colors={[theme.colors.secondary, theme.colors.primary]}
+        style={styles.gradient}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <ThemedText style={styles.iconText}>✨</ThemedText>
+            </View>
+            <ThemedText style={styles.title}>Criar Conta</ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Junte-se a nós e comece sua jornada
             </ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
-      </ScrollView>
+          </View>
+
+          <View style={styles.formContainer}>
+            <Input
+              label="Nome Completo"
+              placeholder="João Silva"
+              value={name}
+              onChangeText={setName}
+              icon="person-outline"
+            />
+
+            <Input
+              label="E-mail"
+              placeholder="seu@email.com"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              icon="mail-outline"
+            />
+
+            <Input
+              label="Telefone"
+              placeholder="+55 11 99999-9999"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              icon="call-outline"
+            />
+
+            <Input
+              label="Senha"
+              placeholder="Mínimo 6 caracteres"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              showPasswordToggle
+              icon="lock-closed-outline"
+            />
+
+            <Input
+              label="Confirmar Senha"
+              placeholder="Digite a senha novamente"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              showPasswordToggle
+              icon="lock-closed-outline"
+            />
+
+            <Button
+              title="Criar Conta"
+              onPress={handleRegister}
+              loading={loading}
+              fullWidth
+              size="lg"
+              style={styles.registerButton}
+            />
+
+            <Button
+              title="Já tem conta? Faça login"
+              onPress={() => router.back()}
+              variant="ghost"
+              fullWidth
+              style={styles.loginButton}
+            />
+          </View>
+        </ScrollView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
@@ -126,53 +142,53 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  gradient: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
+    paddingVertical: theme.spacing.xl,
   },
-  content: {
-    flex: 1,
-    padding: 20,
+  header: {
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.xxl,
+    paddingBottom: theme.spacing.xl,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  iconText: {
+    fontSize: 40,
   },
   title: {
-    marginBottom: 10,
-    textAlign: 'center',
+    fontSize: theme.fontSize.xxxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.inverse,
+    marginBottom: theme.spacing.sm,
   },
   subtitle: {
-    marginBottom: 30,
+    fontSize: theme.fontSize.md,
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    opacity: 0.7,
   },
-  input: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
-    fontSize: 16,
+  formContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.background.primary,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
   },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+  registerButton: {
+    marginTop: theme.spacing.md,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  linkButton: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#007AFF',
-    fontSize: 14,
+  loginButton: {
+    marginTop: theme.spacing.md,
   },
 });

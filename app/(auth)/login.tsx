@@ -1,9 +1,13 @@
 import { useState } from 'react';
-import { StyleSheet, TextInput, TouchableOpacity, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, View, Animated } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { theme } from '@/constants/Theme';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -33,52 +37,80 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={styles.container}
     >
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <ThemedView style={styles.content}>
-          <ThemedText type="title" style={styles.title}>Login</ThemedText>
-          <ThemedText style={styles.subtitle}>Entre para agendar serviços</ThemedText>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            placeholderTextColor="#999"
-          />
-
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            placeholderTextColor="#999"
-          />
-
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleLogin}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <ThemedText style={styles.buttonText}>Entrar</ThemedText>
-            )}
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.linkButton}
-            onPress={() => router.push('/(auth)/register')}
-          >
-            <ThemedText style={styles.linkText}>
-              Não tem conta? Cadastre-se
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.primaryDark]}
+        style={styles.gradient}
+      >
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <ThemedText style={styles.iconText}>📅</ThemedText>
+            </View>
+            <ThemedText style={styles.title}>Bem-vindo!</ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Entre para agendar serviços incríveis
             </ThemedText>
-          </TouchableOpacity>
-        </ThemedView>
-      </ScrollView>
+          </View>
+
+          <View style={styles.formContainer}>
+            <Input
+              label="E-mail"
+              placeholder="seu@email.com"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              icon="mail-outline"
+            />
+
+            <Input
+              label="Senha"
+              placeholder="••••••••"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              showPasswordToggle
+              icon="lock-closed-outline"
+            />
+
+            <Button
+              title="Entrar"
+              onPress={handleLogin}
+              loading={loading}
+              fullWidth
+              size="lg"
+              style={styles.loginButton}
+            />
+
+            <Button
+              title="Não tem conta? Cadastre-se"
+              onPress={() => router.push('/(auth)/register')}
+              variant="ghost"
+              fullWidth
+              style={styles.registerButton}
+            />
+
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <ThemedText style={styles.dividerText}>ou</ThemedText>
+              <View style={styles.dividerLine} />
+            </View>
+
+            <View style={styles.demoInfo}>
+              <ThemedText style={styles.demoTitle}>🎯 Conta de Demonstração</ThemedText>
+              <ThemedText style={styles.demoText}>
+                Email: profissional@teste.com
+              </ThemedText>
+              <ThemedText style={styles.demoText}>
+                Senha: senha123
+              </ThemedText>
+            </View>
+          </View>
+        </ScrollView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
@@ -87,53 +119,86 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  gradient: {
+    flex: 1,
+  },
   scrollContent: {
     flexGrow: 1,
+    paddingVertical: theme.spacing.xl,
   },
-  content: {
-    flex: 1,
-    padding: 20,
+  header: {
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.xxl,
+    paddingBottom: theme.spacing.xl,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
+  },
+  iconText: {
+    fontSize: 40,
   },
   title: {
-    marginBottom: 10,
-    textAlign: 'center',
+    fontSize: theme.fontSize.xxxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.inverse,
+    marginBottom: theme.spacing.sm,
   },
   subtitle: {
-    marginBottom: 30,
+    fontSize: theme.fontSize.md,
+    color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
-    opacity: 0.7,
   },
-  input: {
-    backgroundColor: '#fff',
+  formContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.background.primary,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
+    padding: theme.spacing.xl,
+  },
+  loginButton: {
+    marginTop: theme.spacing.md,
+  },
+  registerButton: {
+    marginTop: theme.spacing.md,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: theme.spacing.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: theme.colors.border.light,
+  },
+  dividerText: {
+    marginHorizontal: theme.spacing.md,
+    color: theme.colors.text.tertiary,
+    fontSize: theme.fontSize.sm,
+  },
+  demoInfo: {
+    backgroundColor: theme.colors.background.secondary,
+    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
-    fontSize: 16,
+    borderColor: theme.colors.border.light,
   },
-  button: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 10,
+  demoTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  linkButton: {
-    marginTop: 20,
-    alignItems: 'center',
-  },
-  linkText: {
-    color: '#007AFF',
-    fontSize: 14,
+  demoText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginVertical: 2,
   },
 });
