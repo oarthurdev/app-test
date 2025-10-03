@@ -92,6 +92,78 @@ As seguintes variáveis já estão configuradas no Replit Secrets:
 - ✅ Integração com Stripe para pagamentos (modo demonstração documentado)
 - ✅ Envio de SMS de confirmação via Twilio
 - ✅ Persistência de dados em PostgreSQL
+- ✅ **UI/UX moderna e profissional** (atualização recente - Outubro 2025)
+
+## Design System e UI/UX (Atualização Outubro 2025)
+
+### Sistema de Design (`constants/Theme.ts`)
+Implementado um sistema de design completo e consistente com:
+- **Paleta de Cores**: Primary (#6366f1), Secondary (#8b5cf6), Success, Warning, Error, Info
+- **Gradientes**: Transições suaves entre primary e primaryDark para elementos visuais impactantes
+- **Espaçamentos**: Sistema padronizado (xs: 4px até xxl: 48px)
+- **Tipografia**: Tamanhos de fonte consistentes (xs: 12px até xxxl: 32px) e pesos (regular, medium, semibold, bold)
+- **Bordas**: Border radius padronizado (sm: 8px até full: 9999px)
+- **Sombras**: 4 níveis de elevação (sm, md, lg, xl) para profundidade visual
+
+### Componentes Reutilizáveis (`components/ui/`)
+- **Button**: Múltiplas variantes (primary, secondary, outline, ghost), tamanhos (sm, md, lg), estados de loading, gradientes
+- **Input**: Campos com ícones, labels, estados de foco, toggle de senha, validação visual
+- **Card**: Cards com variantes (default, elevated, outlined) para organização de conteúdo
+
+### Telas Redesenhadas
+
+#### Autenticação (`app/(auth)/`)
+- **Login e Registro**: Headers com gradientes, ícones grandes, inputs modernos com validação visual
+- **Experiência**: KeyboardAvoidingView, scrollable, feedback visual completo
+
+#### Principais (`app/(tabs)/`)
+- **Serviços (index.tsx)**: 
+  - Header com gradiente e saudação personalizada
+  - Cards de serviço com ícones, preços destacados, badges profissionais
+  - Indicadores visuais de duração e profissional
+  - Pull-to-refresh e animações suaves
+  
+- **Agendamentos (appointments.tsx)**:
+  - Timeline visual de agendamentos
+  - Badges de status coloridos (confirmado/pendente)
+  - Informações de pagamento com ícones
+  - Distinção visual entre agendamentos futuros e passados
+  
+- **Perfil (profile.tsx)**:
+  - Avatar circular com inicial do nome
+  - Badge especial para profissionais
+  - Cards informativos com ícones
+  - Gradiente no header
+  
+- **Admin (admin.tsx)**:
+  - Formulários organizados com seções claras
+  - Seletor de dias da semana horizontal e visual
+  - Inputs com ícones contextuais
+  - Feedback visual em todas as ações
+
+#### Fluxo de Agendamento (`app/(booking)/`)
+- **Verificação (verify.tsx)**:
+  - Layout limpo com cards informativos
+  - Separação clara de dados do cliente e agendamento
+  - Avisos visuais antes da confirmação
+  
+- **Pagamento (payment.tsx)**:
+  - Card de demonstração com avisos claros
+  - Fluxo de pagamento explicado visualmente em etapas
+  - Status do agendamento com badges
+  - Design profissional mesmo em modo demo
+
+### Melhorias de Experiência
+- ✅ Gradientes modernos em headers de todas as telas
+- ✅ Ícones contextuais do Ionicons em toda a aplicação
+- ✅ Animações e transições suaves
+- ✅ Feedback visual consistente (loading, success, error)
+- ✅ Estados vazios informativos com ícones e mensagens amigáveis
+- ✅ Design responsivo e adaptável
+- ✅ Paleta de cores moderna e acessível
+- ✅ Hierarquia visual clara com tipografia consistente
+- ✅ Sombras e elevações para profundidade
+- ✅ Espaçamentos harmoniosos em toda a interface
 
 ## Sobre o Pagamento
 
