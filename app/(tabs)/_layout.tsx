@@ -31,7 +31,7 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Serviços',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="scissors" color={color} />,
         }}
       />
       <Tabs.Screen
@@ -46,7 +46,7 @@ export default function TabLayout() {
           name="admin"
           options={{
             title: 'Admin',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="gear" color={color} />,
+            tabBarIcon: ({ color }) => <IconSymbol size={28} name="briefcase.fill" color={color} />,
           }}
         />
       )}
@@ -54,7 +54,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.fill" color={color} />,
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="person.circle.fill" color={color} />,
         }}
       />
     </Tabs>

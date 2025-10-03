@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { theme } from '@/constants/Theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons'; // Added for icons
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -41,7 +42,7 @@ export default function LoginScreen() {
         colors={[theme.colors.primary, theme.colors.primaryDark]}
         style={styles.gradient}
       >
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
         >
@@ -55,7 +56,7 @@ export default function LoginScreen() {
             </ThemedText>
           </View>
 
-          <View style={styles.formContainer}>
+          <ThemedView style={styles.formContainer}>
             <Input
               label="E-mail"
               placeholder="seu@email.com"
@@ -63,7 +64,7 @@ export default function LoginScreen() {
               onChangeText={setEmail}
               autoCapitalize="none"
               keyboardType="email-address"
-              icon="mail-outline"
+              icon={<Ionicons name="mail-outline" size={20} color={theme.colors.text.secondary} />}
             />
 
             <Input
@@ -73,7 +74,7 @@ export default function LoginScreen() {
               onChangeText={setPassword}
               secureTextEntry
               showPasswordToggle
-              icon="lock-closed-outline"
+              icon={<Ionicons name="lock-closed-outline" size={20} color={theme.colors.text.secondary} />}
             />
 
             <Button
@@ -108,7 +109,7 @@ export default function LoginScreen() {
                 Senha: senha123
               </ThemedText>
             </View>
-          </View>
+          </ThemedView>
         </ScrollView>
       </LinearGradient>
     </KeyboardAvoidingView>
@@ -125,11 +126,11 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingVertical: theme.spacing.xl,
+    justifyContent: 'center', // Center content vertically
   },
   header: {
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.xxl,
     paddingBottom: theme.spacing.xl,
   },
   iconContainer: {
@@ -154,13 +155,14 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.md,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
+    maxWidth: 300,
   },
   formContainer: {
     flex: 1,
-    backgroundColor: theme.colors.background.primary,
     borderTopLeftRadius: theme.borderRadius.xl,
     borderTopRightRadius: theme.borderRadius.xl,
     padding: theme.spacing.xl,
+    justifyContent: 'center', // Center form elements
   },
   loginButton: {
     marginTop: theme.spacing.md,
@@ -189,6 +191,7 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     borderWidth: 1,
     borderColor: theme.colors.border.light,
+    marginTop: theme.spacing.lg,
   },
   demoTitle: {
     fontSize: theme.fontSize.md,
