@@ -1,80 +1,79 @@
-
 import { useState } from 'react';
-import { StyleSheet, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import { StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, View } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/contexts/AuthContext';
-import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
+import { Input } from '@/components/ui/Input';
 import { theme } from '@/constants/Theme';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
 
 export default function RegisterScreen() {
-  const { register } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { register } = useAuth();
 
   const handleRegister = async () => {
-    if (!name || !email || !phone || !password) {
-      alert('Por favor, preencha todos os campos');
+    if (!name || !email || !phone || !password || !confirmPassword) {
+      Alert.alert('Erro', 'Por favor, preencha todos os campos');
       return;
     }
 
+    if (password !== confirmPassword) {
+      Alert.alert('Erro', 'As senhas não coincidem');
+      return;
+    }
+
+    if (password.length < 6) {
+      Alert.alert('Erro', 'A senha deve ter pelo menos 6 caracteres');
+      return;
+    }
+
+    setLoading(true);
     try {
-      setLoading(true);
       await register(name, email, phone, password);
       router.replace('/(tabs)');
     } catch (error: any) {
-      alert(error.message || 'Erro ao criar conta');
+      Alert.alert('Erro', error.message || 'Erro ao registrar');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ThemedView style={styles.container}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
       <LinearGradient
-        colors={[theme.colors.primary, theme.colors.primaryDark]}
-        style={styles.headerGradient}
+        colors={[theme.colors.secondary, theme.colors.primary]}
+        style={styles.gradient}
       >
-        <View style={styles.header}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="person-add" size={64} color={theme.colors.text.inverse} />
-          </View>
-          <ThemedText style={styles.title}>Criar Conta</ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Cadastre-se para começar a agendar
-          </ThemedText>
-        </View>
-      </LinearGradient>
-
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.keyboardView}
-      >
-        <ScrollView
+        <ScrollView 
           contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Card style={styles.formCard}>
-            <View style={styles.formHeader}>
-              <Ionicons name="create" size={32} color={theme.colors.primary} />
-              <ThemedText style={styles.formTitle}>Seus Dados</ThemedText>
+          <View style={styles.header}>
+            <View style={styles.iconContainer}>
+              <ThemedText style={styles.iconText}>✨</ThemedText>
             </View>
+            <ThemedText style={styles.title}>Criar Conta</ThemedText>
+            <ThemedText style={styles.subtitle}>
+              Junte-se a nós e comece sua jornada
+            </ThemedText>
+          </View>
 
+          <View style={styles.formContainer}>
             <Input
-              label="Nome completo"
-              placeholder="Seu nome"
+              label="Nome Completo"
+              placeholder="João Silva"
               value={name}
               onChangeText={setName}
-              icon="person"
+              icon="person-outline"
             />
 
             <Input
@@ -82,146 +81,114 @@ export default function RegisterScreen() {
               placeholder="seu@email.com"
               value={email}
               onChangeText={setEmail}
-              keyboardType="email-address"
               autoCapitalize="none"
-              icon="mail"
+              keyboardType="email-address"
+              icon="mail-outline"
             />
 
             <Input
               label="Telefone"
-              placeholder="(00) 00000-0000"
+              placeholder="+55 11 99999-9999"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
-              icon="call"
+              icon="call-outline"
             />
 
             <Input
               label="Senha"
-              placeholder="Crie uma senha"
+              placeholder="Mínimo 6 caracteres"
               value={password}
               onChangeText={setPassword}
               secureTextEntry
               showPasswordToggle
-              icon="lock-closed"
+              icon="lock-closed-outline"
             />
 
-            <View style={styles.infoBox}>
-              <Ionicons name="shield-checkmark" size={20} color={theme.colors.success} />
-              <ThemedText style={styles.infoText}>
-                Seus dados estão seguros e protegidos
-              </ThemedText>
-            </View>
+            <Input
+              label="Confirmar Senha"
+              placeholder="Digite a senha novamente"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              secureTextEntry
+              showPasswordToggle
+              icon="lock-closed-outline"
+            />
 
             <Button
-              title={loading ? 'Criando conta...' : 'Criar Conta'}
+              title="Criar Conta"
               onPress={handleRegister}
               loading={loading}
               fullWidth
+              size="lg"
               style={styles.registerButton}
             />
 
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <ThemedText style={styles.dividerText}>ou</ThemedText>
-              <View style={styles.dividerLine} />
-            </View>
-
             <Button
-              title="Já tenho uma conta"
-              onPress={() => router.push('/(auth)/login')}
-              variant="outline"
+              title="Já tem conta? Faça login"
+              onPress={() => router.back()}
+              variant="ghost"
               fullWidth
+              style={styles.loginButton}
             />
-          </Card>
+          </View>
         </ScrollView>
-      </KeyboardAvoidingView>
-    </ThemedView>
+      </LinearGradient>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background.secondary,
   },
-  headerGradient: {
-    paddingTop: 60,
-    paddingBottom: theme.spacing.xxl,
+  gradient: {
+    flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingVertical: theme.spacing.xl,
   },
   header: {
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,
+    paddingTop: theme.spacing.xxl,
+    paddingBottom: theme.spacing.xl,
   },
   iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: theme.spacing.lg,
+  },
+  iconText: {
+    fontSize: 40,
   },
   title: {
     fontSize: theme.fontSize.xxxl,
     fontWeight: theme.fontWeight.bold,
     color: theme.colors.text.inverse,
-    marginBottom: theme.spacing.xs,
-    textAlign: 'center',
+    marginBottom: theme.spacing.sm,
   },
   subtitle: {
     fontSize: theme.fontSize.md,
     color: 'rgba(255, 255, 255, 0.9)',
     textAlign: 'center',
   },
-  keyboardView: {
+  formContainer: {
     flex: 1,
-  },
-  scrollContent: {
-    padding: theme.spacing.lg,
-  },
-  formCard: {
+    backgroundColor: theme.colors.background.primary,
+    borderTopLeftRadius: theme.borderRadius.xl,
+    borderTopRightRadius: theme.borderRadius.xl,
     padding: theme.spacing.xl,
   },
-  formHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.md,
-    marginBottom: theme.spacing.xl,
-    paddingBottom: theme.spacing.lg,
-    borderBottomWidth: 2,
-    borderBottomColor: theme.colors.border.light,
-  },
-  formTitle: {
-    fontSize: theme.fontSize.xxl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-  },
-  infoBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    backgroundColor: `${theme.colors.success}15`,
-    padding: theme.spacing.md,
-    borderRadius: theme.borderRadius.md,
+  registerButton: {
     marginTop: theme.spacing.md,
   },
-  infoText: {
-    flex: 1,
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-    lineHeight: 20,
-  },
-  registerButton: {
-    marginTop: theme.spacing.xl,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: theme.spacing.xl,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: theme.colors.border.light,
-  },
-  dividerText: {
-    marginHorizontal: theme.spacing.md,
-    color: theme.colors.text.tertiary,
-    fontSize: theme.fontSize.sm,
+  loginButton: {
+    marginTop: theme.spacing.md,
   },
 });
