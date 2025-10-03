@@ -1,8 +1,13 @@
-import { StyleSheet, TouchableOpacity, View, Alert } from 'react-native';
+import { StyleSheet, View, Alert, ScrollView } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { theme } from '@/constants/Theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
@@ -10,7 +15,7 @@ export default function ProfileScreen() {
   const handleLogout = () => {
     Alert.alert(
       'Sair',
-      'Deseja realmente sair?',
+      'Deseja realmente sair da sua conta?',
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -25,39 +30,116 @@ export default function ProfileScreen() {
     );
   };
 
+  const isProfessional = user?.role === 'professional';
+
   return (
     <ThemedView style={styles.container}>
-      <View style={styles.header}>
-        <ThemedText type="title">Perfil</ThemedText>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.infoCard}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>Nome:</ThemedText>
-          <ThemedText style={styles.value}>{user?.name}</ThemedText>
-        </View>
-
-        <View style={styles.infoCard}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>Email:</ThemedText>
-          <ThemedText style={styles.value}>{user?.email}</ThemedText>
-        </View>
-
-        <View style={styles.infoCard}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>Telefone:</ThemedText>
-          <ThemedText style={styles.value}>{user?.phone}</ThemedText>
-        </View>
-
-        <View style={styles.infoCard}>
-          <ThemedText type="defaultSemiBold" style={styles.label}>Tipo de conta:</ThemedText>
-          <ThemedText style={styles.value}>
-            {user?.role === 'professional' ? 'Profissional' : 'Cliente'}
+      <LinearGradient
+        colors={[theme.colors.primary, theme.colors.primaryDark]}
+        style={styles.headerGradient}
+      >
+        <View style={styles.header}>
+          <View style={styles.avatarContainer}>
+            <View style={styles.avatar}>
+              <ThemedText style={styles.avatarText}>
+                {user?.name?.charAt(0).toUpperCase()}
+              </ThemedText>
+            </View>
+            {isProfessional && (
+              <View style={styles.badgeContainer}>
+                <Ionicons name="star" size={16} color={theme.colors.warning} />
+              </View>
+            )}
+          </View>
+          <ThemedText style={styles.userName}>{user?.name}</ThemedText>
+          <ThemedText style={styles.userRole}>
+            {isProfessional ? '⭐ Profissional' : '👤 Cliente'}
           </ThemedText>
         </View>
+      </LinearGradient>
 
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <ThemedText style={styles.logoutButtonText}>Sair</ThemedText>
-        </TouchableOpacity>
-      </View>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Informações Pessoais</ThemedText>
+
+          <Card style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="mail-outline" size={24} color={theme.colors.primary} />
+              </View>
+              <View style={styles.infoContent}>
+                <ThemedText style={styles.infoLabel}>E-mail</ThemedText>
+                <ThemedText style={styles.infoValue}>{user?.email}</ThemedText>
+              </View>
+            </View>
+          </Card>
+
+          <Card style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <View style={styles.iconContainer}>
+                <Ionicons name="call-outline" size={24} color={theme.colors.primary} />
+              </View>
+              <View style={styles.infoContent}>
+                <ThemedText style={styles.infoLabel}>Telefone</ThemedText>
+                <ThemedText style={styles.infoValue}>{user?.phone}</ThemedText>
+              </View>
+            </View>
+          </Card>
+
+          <Card style={styles.infoCard}>
+            <View style={styles.infoRow}>
+              <View style={styles.iconContainer}>
+                <Ionicons 
+                  name={isProfessional ? "briefcase-outline" : "person-outline"} 
+                  size={24} 
+                  color={theme.colors.primary} 
+                />
+              </View>
+              <View style={styles.infoContent}>
+                <ThemedText style={styles.infoLabel}>Tipo de Conta</ThemedText>
+                <ThemedText style={styles.infoValue}>
+                  {isProfessional ? 'Conta Profissional' : 'Conta Cliente'}
+                </ThemedText>
+              </View>
+            </View>
+          </Card>
+        </View>
+
+        {isProfessional && (
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Recursos Profissionais</ThemedText>
+            <Card style={styles.featureCard}>
+              <View style={styles.featureContent}>
+                <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
+                <View style={styles.featureText}>
+                  <ThemedText style={styles.featureTitle}>Gerenciar Serviços</ThemedText>
+                  <ThemedText style={styles.featureDescription}>
+                    Acesse o painel Admin para cadastrar e gerenciar seus serviços
+                  </ThemedText>
+                </View>
+              </View>
+            </Card>
+          </View>
+        )}
+
+        <View style={styles.section}>
+          <ThemedText style={styles.sectionTitle}>Configurações</ThemedText>
+          
+          <Button
+            title="Sair da Conta"
+            onPress={handleLogout}
+            variant="outline"
+            fullWidth
+            style={styles.logoutButton}
+          />
+        </View>
+
+        <View style={styles.footer}>
+          <ThemedText style={styles.footerText}>
+            Versão 1.0.0
+          </ThemedText>
+        </View>
+      </ScrollView>
     </ThemedView>
   );
 }
@@ -65,43 +147,131 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  headerGradient: {
+    paddingTop: 60,
+    paddingBottom: theme.spacing.xxl,
   },
   header: {
-    padding: 20,
-    paddingTop: 60,
+    alignItems: 'center',
+    paddingHorizontal: theme.spacing.xl,
+  },
+  avatarContainer: {
+    position: 'relative',
+    marginBottom: theme.spacing.md,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 4,
+    borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  avatarText: {
+    fontSize: 40,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.inverse,
+  },
+  badgeContainer: {
+    position: 'absolute',
+    right: 0,
+    bottom: 0,
+    backgroundColor: theme.colors.text.inverse,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: theme.colors.primary,
+  },
+  userName: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.inverse,
+    marginBottom: theme.spacing.xs,
+  },
+  userRole: {
+    fontSize: theme.fontSize.md,
+    color: 'rgba(255, 255, 255, 0.9)',
   },
   content: {
-    padding: 20,
+    flex: 1,
+    paddingHorizontal: theme.spacing.lg,
+  },
+  section: {
+    marginTop: theme.spacing.xl,
+  },
+  sectionTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.md,
   },
   infoCard: {
-    backgroundColor: '#fff',
-    padding: 20,
-    borderRadius: 12,
-    marginBottom: 15,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    marginBottom: theme.spacing.md,
   },
-  label: {
-    fontSize: 14,
-    marginBottom: 5,
-    opacity: 0.7,
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  value: {
-    fontSize: 16,
+  iconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: `${theme.colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+  },
+  infoContent: {
+    flex: 1,
+  },
+  infoLabel: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.tertiary,
+    marginBottom: 2,
+  },
+  infoValue: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.primary,
+    fontWeight: theme.fontWeight.medium,
+  },
+  featureCard: {
+    marginBottom: theme.spacing.md,
+  },
+  featureContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.md,
+  },
+  featureText: {
+    flex: 1,
+  },
+  featureTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: 4,
+  },
+  featureDescription: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
   },
   logoutButton: {
-    backgroundColor: '#DC3545',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 20,
+    borderColor: theme.colors.error,
   },
-  logoutButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
+  footer: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.xl,
+  },
+  footerText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.tertiary,
   },
 });
