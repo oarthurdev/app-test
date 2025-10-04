@@ -14,10 +14,6 @@ localPort = 5000
 externalPort = 80
 
 [[ports]]
-localPort = 8082
-externalPort = 3000
-
-[[ports]]
 localPort = 44703
 externalPort = 3002
 
@@ -93,13 +89,13 @@ waitForPort = 3001
 name = "Frontend"
 author = "agent"
 
-[[workflows.workflow.tasks]]
-task = "shell.exec"
-args = "EXPO_METRO_PORT=5000 npx expo start --web --port 5000"
-waitForPort = 5000
-
 [workflows.workflow.metadata]
 outputType = "webview"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "EXPO_PUBLIC_API_URL=https://b1865478-a86b-4782-b71f-4430cfe93716-00-2erq59hpuqbxy.janeway.replit.dev:3001 EXPO_METRO_PORT=5000 npx expo start --web --port 5000"
+waitForPort = 5000
 
 [agent]
 expertMode = true
