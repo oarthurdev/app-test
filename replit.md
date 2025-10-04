@@ -1,5 +1,7 @@
 # Sistema de Agendamento de Serviços
 
+**Status**: ✅ Totalmente configurado e funcionando no Replit (Outubro 2025)
+
 ## Visão Geral
 Aplicativo móvel desenvolvido com Expo/React Native para agendamento de serviços com dois tipos de usuários:
 - **Clientes**: Podem visualizar serviços, agendar horários e fazer pagamentos
@@ -57,28 +59,33 @@ Um usuário profissional já foi criado:
 7. Receber confirmação (SMS seria enviado em produção)
 
 ## Variáveis de Ambiente
-As seguintes variáveis já estão configuradas no Replit Secrets:
-- `DATABASE_URL`: Conexão PostgreSQL
-- `JWT_SECRET`: Chave secreta para tokens
-- `STRIPE_SECRET_KEY`: Chave do Stripe
-- `TWILIO_ACCOUNT_SID`: Credenciais Twilio
-- `TWILIO_AUTH_TOKEN`: Token Twilio
-- `TWILIO_PHONE_NUMBER`: Número Twilio
-- `EXPO_PUBLIC_API_URL`: URL da API
+As seguintes variáveis estão configuradas:
+- `DATABASE_URL`: Conexão PostgreSQL Neon (gerado automaticamente)
+- `JWT_SECRET`: Chave secreta para tokens (Replit Secret)
+- `STRIPE_SECRET_KEY`: Chave do Stripe (Replit Secret)
+- `TWILIO_ACCOUNT_SID`: Credenciais Twilio (Replit Secret)
+- `TWILIO_AUTH_TOKEN`: Token Twilio (Replit Secret)
+- `TWILIO_PHONE_NUMBER`: Número Twilio (Replit Secret)
+- `EXPO_PUBLIC_API_URL`: URL da API (configurado no workflow do Frontend)
+- `PAYMENT_DEMO_MODE`: Modo demonstração para pagamentos (true por padrão)
 
 ## Scripts Disponíveis
 - `npm run server`: Inicia o servidor backend na porta 3001
 - `npm run db:push`: Sincroniza schema com banco de dados
+- `npm run db:push --force`: Força sincronização em caso de avisos de perda de dados
 - `npm run db:seed`: Cria usuário profissional de teste
+- `npm run db:studio`: Abre Drizzle Studio para gerenciar banco de dados
 - `npm start`: Inicia o Expo
+- `npm run web`: Inicia apenas o frontend web
 
 ## Configuração do Replit
 - **Backend**: Rodando na porta 3001 (localhost)
 - **Frontend**: Expo web rodando na porta 5000 (0.0.0.0)
-- **Database**: PostgreSQL configurado via DATABASE_URL
+- **Database**: PostgreSQL Neon configurado via DATABASE_URL (provisionado automaticamente)
 - **Workflows**: 
   - Backend: `npm run server` (porta 3001)
-  - Frontend: `EXPO_METRO_PORT=5000 npx expo start --web --port 5000` (porta 5000)
+  - Frontend: `EXPO_PUBLIC_API_URL=https://[DOMAIN]:3001 EXPO_METRO_PORT=5000 npx expo start --web --port 5000` (porta 5000)
+- **Deployment**: Configurado com VM para manter estado do servidor e rodar ambos frontend e backend simultaneamente
 
 ## Características Implementadas
 - ✅ Login e registro com validação
