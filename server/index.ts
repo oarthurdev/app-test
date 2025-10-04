@@ -12,7 +12,7 @@ import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 dotenv.config();
 
 const app = express();
-const PORT = Number(process.env.PORT) || 3001;
+const PORT = Number(process.env.PORT) || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -608,6 +608,6 @@ app.put('/api/notifications/read-all', authenticateToken, async (req: AuthReques
   }
 });
 
-app.listen(PORT, 'localhost', () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`Servidor rodando na porta ${PORT}`);
 });
