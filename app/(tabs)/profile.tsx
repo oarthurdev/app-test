@@ -30,20 +30,27 @@ export default function ProfileScreen() {
   }, [user]);
 
   const setupPushNotifications = async () => {
-    const pushToken = await registerForPushNotifications();
-    if (pushToken && token) {
-      try {
-        await fetch(`${API_URL}/api/auth/push-token`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ pushToken }),
-        });
-      } catch (error) {
-        console.error('Error registering push token:', error);
+    try {
+      const pushToken = await registerForPushNotifications();
+      if (pushToken && token) {
+        try {
+          await fetch(`${API_URL}/api/auth/push-token`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({ pushToken }),
+          });
+          console.log('Push token registered successfully');
+        } catch (error) {
+          console.error('Error registering push token:', error);
+        }
+      } else {
+        console.log('Push notifications not available or not permitted');
       }
+    } catch (error) {
+      console.error('Error setting up push notifications:', error);
     }
   };
 

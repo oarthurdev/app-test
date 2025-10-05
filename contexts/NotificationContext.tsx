@@ -55,6 +55,12 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   const registerForPushNotifications = async (): Promise<string | null> => {
     try {
+      // Check if we're on a supported platform
+      if (Platform.OS === 'web') {
+        console.log('Push notifications are not fully supported on web');
+        return null;
+      }
+
       const { status: existingStatus } = await Notifications.getPermissionsAsync();
       let finalStatus = existingStatus;
 
@@ -68,18 +74,24 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         return null;
       }
 
-      const token = (await Notifications.getExpoPushTokenAsync()).data;
-      
-      if (Platform.OS === 'android') {
-        Notifications.setNotificationChannelAsync('default', {
-          name: 'default',
-          importance: Notifications.AndroidImportance.MAX,
-          vibrationPattern: [0, 250, 250, 250],
-          lightColor: '#FF231F7C',
-        });
-      }
+      // Only try to get Expo push token if permissions are granted
+      try {
+        const token = (await Notifications.getExpoPushTokenAsync()).data;
+        
+        if (Platform.OS === 'android') {
+          await Notifications.setNotificationChannelAsync('default', {
+            name: 'default',
+            importance: Notifications.AndroidImportance.MAX,
+            vibrationPattern: [0, 250, 250, 250],
+            lightColor: '#FF231F7C',
+          });
+        }
 
-      return token;
+        return token;
+      } catch (tokenError) {
+        console.log('Could not get Expo push token:', tokenError);
+        return null;
+      }
     } catch (error) {
       console.error('Error registering for push notifications:', error);
       return null;
