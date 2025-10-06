@@ -30,6 +30,9 @@ export default function TabLayout() {
           },
           default: {},
         }),
+        tabBarLabelStyle: {
+          textTransform: 'none',
+        },
       }}>
       <Tabs.Screen
         name="index"
@@ -63,6 +66,7 @@ export default function TabLayout() {
                   )}
                 </View>
               ),
+              tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
             }}
           />
           <Tabs.Screen
