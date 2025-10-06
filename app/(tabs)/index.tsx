@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, ActivityIndicator, View, RefreshControl } from 'react-native';
+import { StyleSheet, FlatList, ActivityIndicator, View, RefreshControl, Animated } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -25,6 +26,7 @@ export default function HomeScreen() {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [scrollY] = useState(new Animated.Value(0));
 
   useEffect(() => {
     if (user) {
@@ -50,46 +52,78 @@ export default function HomeScreen() {
     loadServices();
   };
 
+  const headerScale = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.9],
+    extrapolate: 'clamp',
+  });
+
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0],
+    extrapolate: 'clamp',
+  });
+
   const renderService = ({ item, index }: { item: Service; index: number }) => (
     <Card
       onPress={() => router.push(`/(booking)/service?serviceId=${item.id}`)}
       style={styles.serviceCard}
     >
-      <View style={styles.cardHeader}>
-        <View style={styles.iconCircle}>
-          <Ionicons name="cut-outline" size={24} color={theme.colors.primary} />
-        </View>
-        <View style={styles.priceTag}>
-          <ThemedText style={styles.priceText}>
-            R$ {parseFloat(item.price).toFixed(2)}
-          </ThemedText>
-        </View>
-      </View>
+      <LinearGradient
+        colors={['rgba(37, 99, 235, 0.05)', 'rgba(37, 99, 235, 0.02)']}
+        style={styles.cardGradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      >
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <View style={styles.iconWrapper}>
+              <LinearGradient
+                colors={theme.colors.gradients.primary}
+                style={styles.iconGradient}
+              >
+                <Ionicons name="sparkles" size={20} color="#fff" />
+              </LinearGradient>
+            </View>
+            <View style={styles.headerInfo}>
+              <ThemedText style={styles.serviceName} numberOfLines={1}>
+                {item.name}
+              </ThemedText>
+              <View style={styles.professionalTag}>
+                <Ionicons name="person" size={12} color={theme.colors.text.tertiary} />
+                <ThemedText style={styles.professionalName} numberOfLines={1}>
+                  {item.professionalName}
+                </ThemedText>
+              </View>
+            </View>
+          </View>
 
-      <ThemedText style={styles.serviceName}>{item.name}</ThemedText>
-      
-      {item.description && (
-        <ThemedText style={styles.serviceDescription} numberOfLines={2}>
-          {item.description}
-        </ThemedText>
-      )}
+          {item.description && (
+            <ThemedText style={styles.serviceDescription} numberOfLines={2}>
+              {item.description}
+            </ThemedText>
+          )}
 
-      <View style={styles.cardFooter}>
-        <View style={styles.infoItem}>
-          <Ionicons name="time-outline" size={16} color={theme.colors.text.secondary} />
-          <ThemedText style={styles.infoText}>{item.duration} min</ThemedText>
-        </View>
-        <View style={styles.infoItem}>
-          <Ionicons name="person-outline" size={16} color={theme.colors.text.secondary} />
-          <ThemedText style={styles.infoText} numberOfLines={1}>
-            {item.professionalName}
-          </ThemedText>
-        </View>
-      </View>
+          <View style={styles.cardFooter}>
+            <View style={styles.infoChip}>
+              <Ionicons name="time" size={14} color={theme.colors.primary} />
+              <ThemedText style={styles.infoChipText}>{item.duration} min</ThemedText>
+            </View>
+            
+            <View style={styles.priceContainer}>
+              <ThemedText style={styles.priceLabel}>a partir de</ThemedText>
+              <ThemedText style={styles.priceValue}>
+                R$ {parseFloat(item.price).toFixed(2)}
+              </ThemedText>
+            </View>
+          </View>
 
-      <View style={styles.arrowContainer}>
-        <Ionicons name="arrow-forward" size={20} color={theme.colors.primary} />
-      </View>
+          <View style={styles.actionButton}>
+            <ThemedText style={styles.actionButtonText}>Agendar</ThemedText>
+            <Ionicons name="arrow-forward" size={16} color="#fff" />
+          </View>
+        </View>
+      </LinearGradient>
     </Card>
   );
 
@@ -104,45 +138,70 @@ export default function HomeScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <LinearGradient
-        colors={[theme.colors.primary, theme.colors.primaryDark]}
-        style={styles.headerGradient}
-      >
-        <View style={styles.header}>
-          <ThemedText style={styles.greeting}>Olá, {user?.name}! 👋</ThemedText>
-          <ThemedText style={styles.title}>Serviços Disponíveis</ThemedText>
-          <ThemedText style={styles.subtitle}>
-            Escolha um serviço e agende seu horário
-          </ThemedText>
-        </View>
-      </LinearGradient>
-
-      {services.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <View style={styles.emptyIcon}>
-            <Ionicons name="calendar-outline" size={64} color={theme.colors.text.tertiary} />
-          </View>
-          <ThemedText style={styles.emptyTitle}>Nenhum serviço disponível</ThemedText>
-          <ThemedText style={styles.emptyText}>
-            Novos serviços serão adicionados em breve!
-          </ThemedText>
-        </View>
-      ) : (
-        <FlatList
-          data={services}
-          renderItem={renderService}
-          keyExtractor={(item) => item.id.toString()}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={onRefresh}
-              tintColor={theme.colors.primary}
-            />
+      <Animated.View 
+        style={[
+          styles.headerContainer,
+          {
+            transform: [{ scale: headerScale }],
+            opacity: headerOpacity,
           }
-        />
-      )}
+        ]}
+      >
+        <LinearGradient
+          colors={theme.colors.gradients.primary}
+          style={styles.headerGradient}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          <View style={styles.header}>
+            <View style={styles.welcomeSection}>
+              <ThemedText style={styles.greeting}>Olá, {user?.name?.split(' ')[0]}! 👋</ThemedText>
+              <ThemedText style={styles.headerTitle}>Explore Nossos Serviços</ThemedText>
+              <ThemedText style={styles.headerSubtitle}>
+                Escolha o melhor para você
+              </ThemedText>
+            </View>
+            
+            <View style={styles.statsContainer}>
+              <View style={styles.statCard}>
+                <ThemedText style={styles.statValue}>{services.length}</ThemedText>
+                <ThemedText style={styles.statLabel}>Serviços</ThemedText>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+      </Animated.View>
+
+      <Animated.FlatList
+        data={services}
+        renderItem={renderService}
+        keyExtractor={(item) => item.id.toString()}
+        contentContainerStyle={styles.listContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.primary}
+          />
+        }
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: true }
+        )}
+        scrollEventThrottle={16}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <View style={styles.emptyIcon}>
+              <Ionicons name="search" size={80} color={theme.colors.text.tertiary} />
+            </View>
+            <ThemedText style={styles.emptyTitle}>Nenhum serviço disponível</ThemedText>
+            <ThemedText style={styles.emptyText}>
+              Novos serviços incríveis em breve!
+            </ThemedText>
+          </View>
+        }
+      />
     </ThemedView>
   );
 }
@@ -156,10 +215,14 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    gap: theme.spacing.md,
   },
   loadingText: {
-    marginTop: theme.spacing.md,
     color: theme.colors.text.secondary,
+    fontSize: theme.fontSize.md,
+  },
+  headerContainer: {
+    overflow: 'hidden',
   },
   headerGradient: {
     paddingTop: 60,
@@ -168,100 +231,160 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: theme.spacing.xl,
   },
+  welcomeSection: {
+    marginBottom: theme.spacing.lg,
+  },
   greeting: {
     fontSize: theme.fontSize.md,
     color: 'rgba(255, 255, 255, 0.9)',
     marginBottom: theme.spacing.xs,
+    fontWeight: theme.fontWeight.medium,
   },
-  title: {
+  headerTitle: {
     fontSize: theme.fontSize.xxxl,
-    fontWeight: theme.fontWeight.bold,
+    fontWeight: theme.fontWeight.extrabold,
     color: theme.colors.text.inverse,
     marginBottom: theme.spacing.xs,
+    letterSpacing: -0.5,
   },
-  subtitle: {
+  headerSubtitle: {
     fontSize: theme.fontSize.md,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: 'rgba(255, 255, 255, 0.85)',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+  },
+  statCard: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    backdropFilter: 'blur(10px)',
+  },
+  statValue: {
+    fontSize: theme.fontSize.xxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.inverse,
+    marginBottom: theme.spacing.xxs,
+  },
+  statLabel: {
+    fontSize: theme.fontSize.sm,
+    color: 'rgba(255, 255, 255, 0.85)',
   },
   listContent: {
     padding: theme.spacing.lg,
+    paddingTop: theme.spacing.md,
   },
   serviceCard: {
     marginBottom: theme.spacing.lg,
-    position: 'relative',
+    padding: 0,
     overflow: 'hidden',
   },
+  cardGradient: {
+    borderRadius: theme.borderRadius.lg,
+  },
+  cardContent: {
+    padding: theme.spacing.lg,
+  },
   cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.md,
+    gap: theme.spacing.md,
+  },
+  iconWrapper: {
+    width: 44,
+    height: 44,
+    borderRadius: theme.borderRadius.md,
+    overflow: 'hidden',
+  },
+  iconGradient: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  headerInfo: {
+    flex: 1,
+  },
+  serviceName: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xxs,
+  },
+  professionalTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+  },
+  professionalName: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.tertiary,
+  },
+  serviceDescription: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.secondary,
+    lineHeight: 22,
+    marginBottom: theme.spacing.md,
+  },
+  cardFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: theme.spacing.md,
   },
-  iconCircle: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: `${theme.colors.primary}10`,
-    justifyContent: 'center',
+  infoChip: {
+    flexDirection: 'row',
     alignItems: 'center',
-  },
-  priceTag: {
-    backgroundColor: theme.colors.primary,
+    gap: theme.spacing.xs,
+    backgroundColor: `${theme.colors.primary}15`,
     paddingHorizontal: theme.spacing.md,
     paddingVertical: theme.spacing.sm,
     borderRadius: theme.borderRadius.full,
   },
-  priceText: {
-    color: theme.colors.text.inverse,
-    fontSize: theme.fontSize.lg,
-    fontWeight: theme.fontWeight.bold,
-  },
-  serviceName: {
-    fontSize: theme.fontSize.xl,
-    fontWeight: theme.fontWeight.bold,
-    color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
-  },
-  serviceDescription: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.secondary,
-    marginBottom: theme.spacing.md,
-    lineHeight: 22,
-  },
-  cardFooter: {
-    flexDirection: 'row',
-    gap: theme.spacing.lg,
-  },
-  infoItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.xs,
-    flex: 1,
-  },
-  infoText: {
+  infoChipText: {
     fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-    flex: 1,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.primary,
   },
-  arrowContainer: {
-    position: 'absolute',
-    right: theme.spacing.lg,
-    bottom: theme.spacing.lg,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: `${theme.colors.primary}15`,
-    justifyContent: 'center',
+  priceContainer: {
+    alignItems: 'flex-end',
+  },
+  priceLabel: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.text.tertiary,
+    marginBottom: 2,
+  },
+  priceValue: {
+    fontSize: theme.fontSize.xl,
+    fontWeight: theme.fontWeight.extrabold,
+    color: theme.colors.text.primary,
+  },
+  actionButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
+    ...theme.shadows.sm,
+  },
+  actionButtonText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.inverse,
   },
   emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    padding: theme.spacing.xl,
+    paddingVertical: theme.spacing.xxxl,
+    paddingHorizontal: theme.spacing.xl,
   },
   emptyIcon: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
+    opacity: 0.3,
   },
   emptyTitle: {
     fontSize: theme.fontSize.xl,

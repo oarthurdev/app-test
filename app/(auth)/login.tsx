@@ -1,5 +1,6 @@
+
 import { useState } from 'react';
-import { StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, View, Animated } from 'react-native';
+import { StyleSheet, Alert, KeyboardAvoidingView, Platform, ScrollView, View, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -8,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { theme } from '@/constants/Theme';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -38,75 +40,106 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <LinearGradient
-        colors={[theme.colors.primary, theme.colors.primaryDark]}
+        colors={theme.colors.gradients.primary}
         style={styles.gradient}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
       >
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <View style={styles.header}>
-            <View style={styles.iconContainer}>
-              <ThemedText style={styles.iconText}>📅</ThemedText>
+          <View style={styles.logoContainer}>
+            <View style={styles.logoCircle}>
+              <LinearGradient
+                colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
+                style={styles.logoGradient}
+              >
+                <Ionicons name="business" size={48} color="#fff" />
+              </LinearGradient>
             </View>
-            <ThemedText style={styles.title}>Bem-vindo!</ThemedText>
-            <ThemedText style={styles.subtitle}>
-              Entre para agendar serviços incríveis
+            <ThemedText style={styles.appName}>BookPro</ThemedText>
+            <ThemedText style={styles.tagline}>
+              Sistema Profissional de Agendamentos
             </ThemedText>
           </View>
 
           <View style={styles.formContainer}>
-            <Input
-              label="E-mail"
-              placeholder="seu@email.com"
-              value={email}
-              onChangeText={setEmail}
-              autoCapitalize="none"
-              keyboardType="email-address"
-              icon="mail-outline"
-            />
-
-            <Input
-              label="Senha"
-              placeholder="••••••••"
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              showPasswordToggle
-              icon="lock-closed-outline"
-            />
-
-            <Button
-              title="Entrar"
-              onPress={handleLogin}
-              loading={loading}
-              fullWidth
-              size="lg"
-              style={styles.loginButton}
-            />
-
-            <Button
-              title="Não tem conta? Cadastre-se"
-              onPress={() => router.push('/(auth)/register')}
-              variant="ghost"
-              fullWidth
-              style={styles.registerButton}
-            />
-
-            <View style={styles.divider}>
-              <View style={styles.dividerLine} />
-              <ThemedText style={styles.dividerText}>ou</ThemedText>
-              <View style={styles.dividerLine} />
+            <View style={styles.welcomeSection}>
+              <ThemedText style={styles.welcomeTitle}>Bem-vindo de volta</ThemedText>
+              <ThemedText style={styles.welcomeSubtitle}>
+                Faça login para continuar
+              </ThemedText>
             </View>
 
-            <View style={styles.demoInfo}>
-              <ThemedText style={styles.demoTitle}>🎯 Conta de Demonstração</ThemedText>
-              <ThemedText style={styles.demoText}>
-                Email: profissional@teste.com
-              </ThemedText>
-              <ThemedText style={styles.demoText}>
-                Senha: senha123
-              </ThemedText>
+            <View style={styles.form}>
+              <Input
+                label="E-mail"
+                placeholder="seu@email.com"
+                value={email}
+                onChangeText={setEmail}
+                autoCapitalize="none"
+                keyboardType="email-address"
+                icon="mail"
+              />
+
+              <Input
+                label="Senha"
+                placeholder="Digite sua senha"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                showPasswordToggle
+                icon="lock-closed"
+              />
+
+              <TouchableOpacity style={styles.forgotPassword}>
+                <ThemedText style={styles.forgotPasswordText}>
+                  Esqueceu a senha?
+                </ThemedText>
+              </TouchableOpacity>
+
+              <Button
+                title="Entrar"
+                onPress={handleLogin}
+                loading={loading}
+                fullWidth
+                size="lg"
+                style={styles.loginButton}
+              />
+
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <ThemedText style={styles.dividerText}>ou</ThemedText>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <TouchableOpacity 
+                style={styles.registerLink}
+                onPress={() => router.push('/(auth)/register')}
+              >
+                <ThemedText style={styles.registerText}>
+                  Não tem uma conta? <ThemedText style={styles.registerTextBold}>Cadastre-se</ThemedText>
+                </ThemedText>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.demoCard}>
+              <View style={styles.demoHeader}>
+                <Ionicons name="information-circle" size={20} color={theme.colors.info} />
+                <ThemedText style={styles.demoTitle}>Conta Demo</ThemedText>
+              </View>
+              <View style={styles.demoContent}>
+                <View style={styles.demoRow}>
+                  <Ionicons name="mail" size={14} color={theme.colors.text.tertiary} />
+                  <ThemedText style={styles.demoText}>profissional@teste.com</ThemedText>
+                </View>
+                <View style={styles.demoRow}>
+                  <Ionicons name="key" size={14} color={theme.colors.text.tertiary} />
+                  <ThemedText style={styles.demoText}>senha123</ThemedText>
+                </View>
+              </View>
             </View>
           </View>
         </ScrollView>
@@ -126,52 +159,81 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     paddingVertical: theme.spacing.xl,
   },
-  header: {
+  logoContainer: {
     alignItems: 'center',
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: theme.spacing.xxl,
-    paddingBottom: theme.spacing.xl,
+    paddingTop: theme.spacing.xxxl,
+    paddingBottom: theme.spacing.xxl,
   },
-  iconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  logoCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginBottom: theme.spacing.lg,
+    overflow: 'hidden',
+  },
+  logoGradient: {
+    width: '100%',
+    height: '100%',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    borderWidth: 3,
+    borderColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 60,
   },
-  iconText: {
-    fontSize: 40,
-  },
-  title: {
-    fontSize: theme.fontSize.xxxl,
-    fontWeight: theme.fontWeight.bold,
+  appName: {
+    fontSize: theme.fontSize.display,
+    fontWeight: theme.fontWeight.extrabold,
     color: theme.colors.text.inverse,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+    letterSpacing: -1,
   },
-  subtitle: {
+  tagline: {
     fontSize: theme.fontSize.md,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: 'rgba(255, 255, 255, 0.85)',
     textAlign: 'center',
+    fontWeight: theme.fontWeight.medium,
   },
   formContainer: {
     flex: 1,
     backgroundColor: theme.colors.background.primary,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
+    borderTopLeftRadius: theme.borderRadius.xxl,
+    borderTopRightRadius: theme.borderRadius.xxl,
     padding: theme.spacing.xl,
+    ...theme.shadows.xl,
+  },
+  welcomeSection: {
+    marginBottom: theme.spacing.xl,
+  },
+  welcomeTitle: {
+    fontSize: theme.fontSize.xxxl,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  welcomeSubtitle: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.secondary,
+  },
+  form: {
+    gap: theme.spacing.md,
+  },
+  forgotPassword: {
+    alignSelf: 'flex-end',
+    marginTop: -theme.spacing.xs,
+  },
+  forgotPasswordText: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.semibold,
   },
   loginButton: {
-    marginTop: theme.spacing.md,
-  },
-  registerButton: {
     marginTop: theme.spacing.md,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: theme.spacing.lg,
+    marginVertical: theme.spacing.xl,
   },
   dividerLine: {
     flex: 1,
@@ -182,23 +244,50 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.md,
     color: theme.colors.text.tertiary,
     fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.medium,
   },
-  demoInfo: {
+  registerLink: {
+    alignItems: 'center',
+    paddingVertical: theme.spacing.md,
+  },
+  registerText: {
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.secondary,
+  },
+  registerTextBold: {
+    color: theme.colors.primary,
+    fontWeight: theme.fontWeight.bold,
+  },
+  demoCard: {
+    marginTop: theme.spacing.xl,
     backgroundColor: theme.colors.background.secondary,
     padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.md,
+    borderRadius: theme.borderRadius.lg,
     borderWidth: 1,
     borderColor: theme.colors.border.light,
+  },
+  demoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
   },
   demoTitle: {
     fontSize: theme.fontSize.md,
     fontWeight: theme.fontWeight.semibold,
     color: theme.colors.text.primary,
-    marginBottom: theme.spacing.sm,
+  },
+  demoContent: {
+    gap: theme.spacing.sm,
+  },
+  demoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
   },
   demoText: {
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
-    marginVertical: 2,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
   },
 });
