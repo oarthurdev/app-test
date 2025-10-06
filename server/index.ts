@@ -568,21 +568,23 @@ app.post(
         })
         .where(eq(appointments.id, appointmentId));
 
-      const [client] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, appointment.clientId))
-        .limit(1);
+      if (appointment.clientId) {
+        const [client] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, appointment.clientId))
+          .limit(1);
 
-      await createNotification(
-        appointment.clientId,
-        "Pagamento Confirmado",
-        `Pagamento do serviço confirmado por ${user.name}`,
-        "payment_confirmed",
-        {
-          appointmentId: appointment.id,
-        },
-      );
+        await createNotification(
+          appointment.clientId,
+          "Pagamento Confirmado",
+          `Pagamento do serviço confirmado por ${user.name}`,
+          "payment_confirmed",
+          {
+            appointmentId: appointment.id,
+          },
+        );
+      }
 
       res.json({ success: true, message: "Pagamento marcado como realizado" });
     } catch (error) {
@@ -594,10 +596,23 @@ app.post(
 
 app.post(
   "/api/appointments/request-verification",
-  authenticateToken,
   async (req: AuthRequest, res) => {
     try {
-      const { serviceId, appointmentDate, phone } = req.body;
+      const { serviceId, appointmentDate, phone, guestName, guestEmail } = req.body;
+      
+      const authHeader = req.headers['authorization'];
+      const token = authHeader && authHeader.split(' ')[1];
+      let userId: number | null = null;
+      let clientName: string;
+      let clientEmail: string;
+
+      if (token) {
+        const { verifyToken } = await import('./auth');
+        const decoded = verifyToken(token);
+        if (decoded) {
+          userId = decoded.userId;
+        }
+      }
 
       const [service] = await db
         .select()
@@ -609,30 +624,53 @@ app.post(
         return res.status(404).json({ error: "Serviço não encontrado" });
       }
 
-      // Gerar código de verificação de 6 dígitos
+      if (userId) {
+        const [client] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, userId))
+          .limit(1);
+        
+        if (!client) {
+          return res.status(404).json({ error: "Cliente não encontrado" });
+        }
+        
+        clientName = client.name;
+        clientEmail = client.email;
+      } else {
+        if (!guestName || !guestEmail || !phone) {
+          return res.status(400).json({ error: "Dados do cliente são obrigatórios" });
+        }
+        
+        clientName = guestName;
+        clientEmail = guestEmail;
+      }
+
       const verificationCode = Math.floor(
         100000 + Math.random() * 900000,
       ).toString();
 
-      // Criar agendamento com status pending
+      const appointmentData: any = {
+        serviceId,
+        professionalId: service.professionalId,
+        appointmentDate: new Date(appointmentDate),
+        status: "pending",
+        paymentStatus: "pending",
+        stripePaymentIntentId: verificationCode,
+      };
+
+      if (userId) {
+        appointmentData.clientId = userId;
+      } else {
+        appointmentData.guestName = guestName;
+        appointmentData.guestEmail = guestEmail;
+        appointmentData.guestPhone = phone;
+      }
+
       const [newAppointment] = await db
         .insert(appointments)
-        .values({
-          clientId: req.userId!,
-          serviceId,
-          professionalId: service.professionalId,
-          appointmentDate: new Date(appointmentDate),
-          status: "pending",
-          paymentStatus: "pending",
-          stripePaymentIntentId: verificationCode, // Armazenar código temporariamente
-        })
+        .values(appointmentData)
         .returning();
-
-      const [client] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, req.userId!))
-        .limit(1);
 
       const appointmentDateFormatted = new Date(appointmentDate).toLocaleString(
         "pt-BR",
@@ -645,12 +683,11 @@ app.post(
         },
       );
 
-      // Enviar código de verificação via WhatsApp
-      if (client && process.env.ZAPI_INSTANCE_ID) {
+      if (process.env.ZAPI_INSTANCE_ID) {
         try {
           const message =
             `🎉 *Código de Verificação*\n\n` +
-            `Olá ${client.name}!\n\n` +
+            `Olá ${clientName}!\n\n` +
             `Seu código de verificação para o agendamento:\n\n` +
             `📅 *Data:* ${appointmentDateFormatted}\n` +
             `💇 *Serviço:* ${service.name}\n` +
@@ -662,7 +699,6 @@ app.post(
           await sendWhatsAppMessage(phone, message);
         } catch (whatsappError) {
           console.error("Erro ao enviar WhatsApp:", whatsappError);
-          // Remove o agendamento se falhar ao enviar WhatsApp
           await db
             .delete(appointments)
             .where(eq(appointments.id, newAppointment.id));
@@ -688,7 +724,6 @@ app.post(
 
 app.post(
   "/api/appointments/verify-code",
-  authenticateToken,
   async (req: AuthRequest, res) => {
     try {
       const { appointmentId, verificationCode } = req.body;
@@ -703,42 +738,47 @@ app.post(
         return res.status(404).json({ error: "Agendamento não encontrado" });
       }
 
-      if (appointment.clientId !== req.userId) {
-        return res
-          .status(403)
-          .json({
-            error: "Você não tem permissão para verificar este agendamento",
-          });
-      }
-
-      // Verificar código
       if (appointment.stripePaymentIntentId !== verificationCode) {
         return res
           .status(400)
           .json({ error: "Código de verificação inválido" });
       }
 
-      // Atualizar status para confirmado
       await db
         .update(appointments)
         .set({
           status: "confirmed",
-          stripePaymentIntentId: null, // Limpar código usado
+          stripePaymentIntentId: null,
         })
         .where(eq(appointments.id, appointmentId));
 
-      const [client] = await db
-        .select()
-        .from(users)
-        .where(eq(users.id, appointment.clientId))
-        .limit(1);
+      let clientName: string;
+      let clientPhone: string;
 
-      // Enviar confirmação via WhatsApp
-      if (client && process.env.ZAPI_INSTANCE_ID) {
+      if (appointment.clientId) {
+        const [client] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, appointment.clientId))
+          .limit(1);
+        
+        if (client) {
+          clientName = client.name;
+          clientPhone = client.phone;
+        } else {
+          clientName = "Cliente";
+          clientPhone = "";
+        }
+      } else {
+        clientName = appointment.guestName || "Cliente";
+        clientPhone = appointment.guestPhone || "";
+      }
+
+      if (clientPhone && process.env.ZAPI_INSTANCE_ID) {
         try {
           const message =
             `✅ *Agendamento Verificado com Sucesso!*\n\n` +
-            `Olá ${client.name}!\n\n` +
+            `Olá ${clientName}!\n\n` +
             `Seu agendamento foi confirmado e está aguardando o dia:\n\n` +
             `📅 *Data:* ${appointment.appointmentDate.toLocaleDateString(
               "pt-BR",
@@ -758,7 +798,7 @@ app.post(
             )}\n\n` +
             `Nos vemos em breve! 🎉`;
 
-          await sendWhatsAppMessage(client.phone, message);
+          await sendWhatsAppMessage(clientPhone, message);
         } catch (whatsappError) {
           console.error(
             "Erro ao enviar WhatsApp de confirmação:",

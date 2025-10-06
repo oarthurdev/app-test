@@ -166,24 +166,69 @@ export default function VerifyScreen() {
             <ThemedText style={styles.cardTitle}>Dados do Cliente</ThemedText>
           </View>
 
-          <View style={styles.infoRow}>
-            <ThemedText style={styles.label}>Nome</ThemedText>
-            <ThemedText style={styles.value}>{user?.name}</ThemedText>
-          </View>
+          {user ? (
+            <>
+              <View style={styles.infoRow}>
+                <ThemedText style={styles.label}>Nome</ThemedText>
+                <ThemedText style={styles.value}>{user.name}</ThemedText>
+              </View>
 
-          <View style={styles.divider} />
+              <View style={styles.divider} />
 
-          <View style={styles.infoRow}>
-            <ThemedText style={styles.label}>E-mail</ThemedText>
-            <ThemedText style={styles.value}>{user?.email}</ThemedText>
-          </View>
+              <View style={styles.infoRow}>
+                <ThemedText style={styles.label}>E-mail</ThemedText>
+                <ThemedText style={styles.value}>{user.email}</ThemedText>
+              </View>
 
-          <View style={styles.divider} />
+              <View style={styles.divider} />
 
-          <View style={styles.infoRow}>
-            <ThemedText style={styles.label}>Telefone</ThemedText>
-            <ThemedText style={styles.value}>{user?.phone}</ThemedText>
-          </View>
+              <View style={styles.infoRow}>
+                <ThemedText style={styles.label}>Telefone</ThemedText>
+                <ThemedText style={styles.value}>{user.phone}</ThemedText>
+              </View>
+            </>
+          ) : (
+            <>
+              <View style={styles.inputGroup}>
+                <ThemedText style={styles.inputLabel}>Nome completo *</ThemedText>
+                <TextInput
+                  style={styles.input}
+                  value={guestName}
+                  onChangeText={setGuestName}
+                  placeholder="Digite seu nome"
+                  placeholderTextColor={theme.colors.text.tertiary}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <ThemedText style={styles.inputLabel}>E-mail *</ThemedText>
+                <TextInput
+                  style={styles.input}
+                  value={guestEmail}
+                  onChangeText={setGuestEmail}
+                  placeholder="seu@email.com"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  placeholderTextColor={theme.colors.text.tertiary}
+                />
+              </View>
+
+              <View style={styles.inputGroup}>
+                <ThemedText style={styles.inputLabel}>Telefone (WhatsApp) *</ThemedText>
+                <TextInput
+                  style={styles.input}
+                  value={guestPhone}
+                  onChangeText={setGuestPhone}
+                  placeholder="(11) 99999-9999"
+                  keyboardType="phone-pad"
+                  placeholderTextColor={theme.colors.text.tertiary}
+                />
+                <ThemedText style={styles.inputHint}>
+                  Digite apenas números com DDD
+                </ThemedText>
+              </View>
+            </>
+          )}
         </Card>
 
         <Card style={styles.infoCard}>
@@ -418,5 +463,28 @@ const styles = StyleSheet.create({
     fontWeight: theme.fontWeight.bold,
     textAlign: 'center',
     color: theme.colors.text.primary,
+  },
+  inputGroup: {
+    marginBottom: theme.spacing.md,
+  },
+  inputLabel: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.xs,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.primary,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  inputHint: {
+    fontSize: theme.fontSize.xs,
+    color: theme.colors.text.tertiary,
+    marginTop: theme.spacing.xs,
   },
 });

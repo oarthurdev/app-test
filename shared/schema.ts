@@ -44,13 +44,16 @@ export const businessHours = pgTable('business_hours', {
 
 export const appointments = pgTable('appointments', {
   id: serial('id').primaryKey(),
-  clientId: integer('client_id').references(() => users.id).notNull(),
+  clientId: integer('client_id').references(() => users.id),
   serviceId: integer('service_id').references(() => services.id).notNull(),
   professionalId: integer('professional_id').references(() => users.id).notNull(),
   appointmentDate: timestamp('appointment_date').notNull(),
   status: text('status').notNull().default('pending'),
   paymentStatus: text('payment_status').notNull().default('pending'),
   stripePaymentIntentId: text('stripe_payment_intent_id'),
+  guestName: text('guest_name'),
+  guestEmail: text('guest_email'),
+  guestPhone: varchar('guest_phone', { length: 20 }),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
