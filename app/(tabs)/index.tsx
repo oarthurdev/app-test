@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, ActivityIndicator, View, RefreshControl, Animated } from 'react-native';
+import { StyleSheet, FlatList, ActivityIndicator, View, RefreshControl, Animated, TextInput } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -24,6 +24,8 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 export default function HomeScreen() {
   const { user } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
+  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [scrollY] = useState(new Animated.Value(0));
@@ -39,12 +41,31 @@ export default function HomeScreen() {
       const response = await fetch(`${API_URL}/api/services`);
       const data = await response.json();
       setServices(data);
+      setFilteredServices(data);
     } catch (error) {
       console.error('Erro ao carregar serviços:', error);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    
+    if (text.trim() === '') {
+      setFilteredServices(services);
+      return;
+    }
+
+    const query = text.toLowerCase();
+    const filtered = services.filter(service => 
+      service.name.toLowerCase().includes(query) ||
+      service.description?.toLowerCase().includes(query) ||
+      service.professionalName.toLowerCase().includes(query)
+    );
+    
+    setFilteredServices(filtered);
   };
 
   const onRefresh = () => {
@@ -172,8 +193,30 @@ export default function HomeScreen() {
         </LinearGradient>
       </Animated.View>
 
+      <View style={styles.searchContainer}>
+        <View style={styles.searchInputWrapper}>
+          <Ionicons name="search" size={20} color={theme.colors.text.tertiary} style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Buscar serviços..."
+            placeholderTextColor={theme.colors.text.tertiary}
+            value={searchQuery}
+            onChangeText={handleSearch}
+          />
+          {searchQuery.length > 0 && (
+            <Ionicons 
+              name="close-circle" 
+              size={20} 
+              color={theme.colors.text.tertiary} 
+              style={styles.clearIcon}
+              onPress={() => handleSearch('')}
+            />
+          )}
+        </View>
+      </View>
+
       <Animated.FlatList
-        data={services}
+        data={filteredServices}
         renderItem={renderService}
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
@@ -195,9 +238,13 @@ export default function HomeScreen() {
             <View style={styles.emptyIcon}>
               <Ionicons name="search" size={80} color={theme.colors.text.tertiary} />
             </View>
-            <ThemedText style={styles.emptyTitle}>Nenhum serviço disponível</ThemedText>
+            <ThemedText style={styles.emptyTitle}>
+              {searchQuery ? 'Nenhum serviço encontrado' : 'Nenhum serviço disponível'}
+            </ThemedText>
             <ThemedText style={styles.emptyText}>
-              Novos serviços incríveis em breve!
+              {searchQuery 
+                ? 'Tente buscar por outro termo' 
+                : 'Novos serviços incríveis em breve!'}
             </ThemedText>
           </View>
         }
@@ -271,6 +318,31 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: theme.fontSize.sm,
     color: 'rgba(255, 255, 255, 0.85)',
+  },
+  searchContainer: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.md,
+    backgroundColor: theme.colors.background.secondary,
+  },
+  searchInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background.primary,
+    borderRadius: theme.borderRadius.lg,
+    paddingHorizontal: theme.spacing.md,
+    ...theme.shadows.sm,
+  },
+  searchIcon: {
+    marginRight: theme.spacing.sm,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: theme.spacing.md,
+    fontSize: theme.fontSize.md,
+    color: theme.colors.text.primary,
+  },
+  clearIcon: {
+    marginLeft: theme.spacing.sm,
   },
   listContent: {
     padding: theme.spacing.lg,
