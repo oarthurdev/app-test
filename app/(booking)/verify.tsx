@@ -19,23 +19,60 @@ export default function VerifyScreen() {
   const [codeSent, setCodeSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [appointmentId, setAppointmentId] = useState<number | null>(null);
+  
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
 
   const date = new Date(appointmentDate as string);
 
   const handleConfirm = async () => {
+    if (!user) {
+      if (!guestName || !guestEmail || !guestPhone) {
+        Alert.alert('Campos obrigatórios', 'Por favor, preencha todos os seus dados para continuar.');
+        return;
+      }
+      
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(guestEmail)) {
+        Alert.alert('Email inválido', 'Por favor, digite um email válido.');
+        return;
+      }
+      
+      const phoneRegex = /^\d{10,11}$/;
+      const cleanPhone = guestPhone.replace(/\D/g, '');
+      if (!phoneRegex.test(cleanPhone)) {
+        Alert.alert('Telefone inválido', 'Por favor, digite um telefone válido com DDD (apenas números).');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
+      const requestBody = user ? {
+        serviceId: Number(serviceId),
+        appointmentDate: appointmentDate,
+        phone: user.phone,
+      } : {
+        serviceId: Number(serviceId),
+        appointmentDate: appointmentDate,
+        phone: guestPhone.replace(/\D/g, ''),
+        guestName: guestName,
+        guestEmail: guestEmail,
+      };
+
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_URL}/api/appointments/request-verification`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          serviceId: Number(serviceId),
-          appointmentDate: appointmentDate,
-          phone: user?.phone,
-        }),
+        headers,
+        body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
