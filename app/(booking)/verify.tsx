@@ -18,6 +18,7 @@ export default function VerifyScreen() {
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
+  const [appointmentId, setAppointmentId] = useState<number | null>(null);
 
   const date = new Date(appointmentDate as string);
 
@@ -42,6 +43,8 @@ export default function VerifyScreen() {
         throw new Error(error.error || 'Erro ao solicitar código de verificação');
       }
 
+      const data = await response.json();
+      setAppointmentId(data.appointmentId);
       setCodeSent(true);
       Alert.alert(
         'Código Enviado! ✅',
@@ -55,6 +58,11 @@ export default function VerifyScreen() {
   };
 
   const handleVerifyCode = async () => {
+    if (!appointmentId) {
+      Alert.alert('Erro', 'ID do agendamento não encontrado');
+      return;
+    }
+
     setLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/appointments/verify-code`, {
@@ -64,9 +72,8 @@ export default function VerifyScreen() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          serviceId: Number(serviceId),
-          appointmentDate: appointmentDate,
-          code: verificationCode,
+          appointmentId: appointmentId,
+          verificationCode: verificationCode,
         }),
       });
 

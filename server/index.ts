@@ -522,6 +522,84 @@ app.post('/api/appointments/:id/mark-paid', authenticateToken, async (req: AuthR
   }
 });
 
+app.post('/api/appointments/request-verification', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { serviceId, appointmentDate, phone } = req.body;
+
+    const [service] = await db
+      .select()
+      .from(services)
+      .where(eq(services.id, serviceId))
+      .limit(1);
+
+    if (!service) {
+      return res.status(404).json({ error: 'Serviço não encontrado' });
+    }
+
+    // Gerar código de verificação de 6 dígitos
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Criar agendamento com status pending
+    const [newAppointment] = await db
+      .insert(appointments)
+      .values({
+        clientId: req.userId!,
+        serviceId,
+        professionalId: service.professionalId,
+        appointmentDate: new Date(appointmentDate),
+        status: 'pending',
+        paymentStatus: 'pending',
+        stripePaymentIntentId: verificationCode, // Armazenar código temporariamente
+      })
+      .returning();
+
+    const [client] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.userId!))
+      .limit(1);
+
+    const appointmentDateFormatted = new Date(appointmentDate).toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+    // Enviar código de verificação via WhatsApp
+    if (client && process.env.ZAPI_INSTANCE_ID) {
+      try {
+        const message = `🎉 *Código de Verificação*\n\n` +
+          `Olá ${client.name}!\n\n` +
+          `Seu código de verificação para o agendamento:\n\n` +
+          `📅 *Data:* ${appointmentDateFormatted}\n` +
+          `💇 *Serviço:* ${service.name}\n` +
+          `💰 *Valor:* R$ ${parseFloat(service.price).toFixed(2)}\n\n` +
+          `🔐 *Código:* ${verificationCode}\n\n` +
+          `Digite este código no aplicativo para confirmar.\n\n` +
+          `Obrigado! 🌟`;
+
+        await sendWhatsAppMessage(phone, message);
+      } catch (whatsappError) {
+        console.error('Erro ao enviar WhatsApp:', whatsappError);
+        // Remove o agendamento se falhar ao enviar WhatsApp
+        await db.delete(appointments).where(eq(appointments.id, newAppointment.id));
+        return res.status(500).json({ error: 'Erro ao enviar código via WhatsApp' });
+      }
+    }
+
+    res.json({ 
+      success: true, 
+      appointmentId: newAppointment.id,
+      message: 'Código enviado via WhatsApp' 
+    });
+  } catch (error) {
+    console.error('Erro ao solicitar verificação:', error);
+    res.status(500).json({ error: 'Erro ao solicitar código de verificação' });
+  }
+});
+
 app.post('/api/appointments/verify-code', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { appointmentId, verificationCode } = req.body;
