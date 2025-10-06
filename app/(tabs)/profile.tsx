@@ -15,13 +15,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function ProfileScreen() {
   const { user, logout, token } = useAuth();
-  const {
-    notifications,
-    unreadCount,
-    registerForPushNotifications,
-    markAsRead,
-    markAllAsRead
-  } = useNotifications();
+  const { registerForPushNotifications } = useNotifications();
 
   useEffect(() => {
     if (user?.role === 'professional') {
@@ -146,39 +140,6 @@ export default function ProfileScreen() {
             </View>
           </Card>
         </View>
-
-        {isProfessional && notifications.length > 0 && (
-          <View style={styles.notificationsSection}>
-            <View style={styles.notificationsHeader}>
-              <ThemedText style={styles.sectionTitle}>
-                Notificações {unreadCount > 0 && `(${unreadCount})`}
-              </ThemedText>
-              {unreadCount > 0 && (
-                <TouchableOpacity onPress={markAllAsRead}>
-                  <ThemedText style={styles.markAllRead}>Marcar todas como lidas</ThemedText>
-                </TouchableOpacity>
-              )}
-            </View>
-
-            {notifications.map((notification) => (
-              <TouchableOpacity
-                key={notification.id}
-                onPress={() => !notification.read && markAsRead(notification.id)}
-              >
-                <Card style={[styles.notificationCard, !notification.read && styles.unreadNotification]}>
-                  <View style={styles.notificationContent}>
-                    <ThemedText style={styles.notificationTitle}>{notification.title}</ThemedText>
-                    <ThemedText style={styles.notificationMessage}>{notification.message}</ThemedText>
-                    <ThemedText style={styles.notificationDate}>
-                      {new Date(notification.createdAt).toLocaleString('pt-BR')}
-                    </ThemedText>
-                  </View>
-                  {!notification.read && <View style={styles.unreadDot} />}
-                </Card>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
 
         {isProfessional && (
           <View style={styles.section}>
@@ -340,52 +301,6 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.secondary,
     lineHeight: 20,
-  },
-  notificationsSection: {
-    marginBottom: theme.spacing.lg,
-  },
-  notificationsHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  markAllRead: {
-    fontSize: 14,
-    color: theme.colors.primary,
-  },
-  notificationCard: {
-    padding: theme.spacing.md,
-    marginBottom: theme.spacing.sm,
-  },
-  unreadNotification: {
-    borderLeftWidth: 4,
-    borderLeftColor: theme.colors.primary,
-  },
-  notificationContent: {
-    flex: 1,
-    marginLeft: theme.spacing.md,
-  },
-  notificationTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  notificationMessage: {
-    fontSize: 14,
-    opacity: 0.8,
-    marginBottom: 4,
-  },
-  notificationDate: {
-    fontSize: 12,
-    opacity: 0.6,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: theme.colors.primary,
-    marginLeft: theme.spacing.sm,
   },
   logoutButton: {
     borderColor: theme.colors.error,
