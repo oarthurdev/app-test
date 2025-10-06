@@ -39,14 +39,18 @@ export default function VerifyScreen() {
         throw new Error(error.error || 'Erro ao criar agendamento');
       }
 
-      const appointment = await response.json();
-
-      router.push({
-        pathname: '/(booking)/payment',
-        params: {
-          appointmentId: appointment.id,
-        },
-      });
+      Alert.alert(
+        'Sucesso! 🎉',
+        'Seu agendamento foi confirmado! Você receberá uma confirmação por SMS.\n\nO pagamento será realizado após o serviço.',
+        [
+          {
+            text: 'OK',
+            onPress: () => {
+              router.replace('/(tabs)');
+            },
+          },
+        ]
+      );
     } catch (error: any) {
       Alert.alert('Erro', error.message);
     } finally {

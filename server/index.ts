@@ -376,7 +376,7 @@ app.post('/api/appointments', authenticateToken, async (req: AuthRequest, res) =
         serviceId,
         professionalId: service.professionalId,
         appointmentDate: new Date(appointmentDate),
-        status: 'pending',
+        status: 'confirmed',
         paymentStatus: 'pending',
       })
       .returning();
@@ -414,17 +414,13 @@ app.post('/api/appointments', authenticateToken, async (req: AuthRequest, res) =
   }
 });
 
-app.post('/api/payments/create-intent', authenticateToken, async (req: AuthRequest, res) => {
+app.post('/api/appointments/:id/mark-paid', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const { appointmentId } = req.body;
+    const appointmentId = Number(req.params.id);
 
     const [appointment] = await db
-      .select({
-        appointment: appointments,
-        service: services,
-      })
+      .select()
       .from(appointments)
-      .leftJoin(services, eq(appointments.serviceId, services.id))
       .where(eq(appointments.id, appointmentId))
       .limit(1);
 
@@ -432,25 +428,47 @@ app.post('/api/payments/create-intent', authenticateToken, async (req: AuthReque
       return res.status(404).json({ error: 'Agendamento não encontrado' });
     }
 
-    const amount = Math.round(parseFloat(appointment.service!.price) * 100);
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, req.userId!))
+      .limit(1);
 
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount,
-      currency: 'brl',
-      metadata: {
-        appointmentId: appointmentId.toString(),
-      },
-    });
+    if (!user || user.role !== 'professional') {
+      return res.status(403).json({ error: 'Apenas profissionais podem marcar pagamentos' });
+    }
+
+    if (appointment.professionalId !== req.userId) {
+      return res.status(403).json({ error: 'Você não tem permissão para atualizar este agendamento' });
+    }
 
     await db
       .update(appointments)
-      .set({ stripePaymentIntentId: paymentIntent.id })
+      .set({
+        paymentStatus: 'paid',
+      })
       .where(eq(appointments.id, appointmentId));
 
-    res.json({ clientSecret: paymentIntent.client_secret });
+    const [client] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, appointment.clientId))
+      .limit(1);
+
+    await createNotification(
+      appointment.clientId,
+      'Pagamento Confirmado',
+      `Pagamento do serviço confirmado por ${user.name}`,
+      'payment_confirmed',
+      {
+        appointmentId: appointment.id,
+      }
+    );
+
+    res.json({ success: true, message: 'Pagamento marcado como realizado' });
   } catch (error) {
-    console.error('Erro ao criar intent de pagamento:', error);
-    res.status(500).json({ error: 'Erro ao criar intent de pagamento' });
+    console.error('Erro ao marcar pagamento:', error);
+    res.status(500).json({ error: 'Erro ao marcar pagamento' });
   }
 });
 
@@ -472,36 +490,10 @@ app.post('/api/payments/confirm', authenticateToken, async (req: AuthRequest, re
       return res.status(403).json({ error: 'Você não tem permissão para confirmar este agendamento' });
     }
 
-    if (!appointment.stripePaymentIntentId) {
-      return res.status(400).json({ error: 'Payment Intent não encontrado' });
-    }
-
-    let paymentIntent;
-    try {
-      paymentIntent = await stripe.paymentIntents.retrieve(appointment.stripePaymentIntentId);
-    } catch (stripeError) {
-      console.error('Erro ao consultar Stripe:', stripeError);
-      return res.status(500).json({ error: 'Erro ao verificar pagamento no Stripe' });
-    }
-
-    const DEMO_MODE = process.env.PAYMENT_DEMO_MODE !== 'false';
-    
-    if (!DEMO_MODE && paymentIntent.status !== 'succeeded' && paymentIntent.status !== 'requires_capture') {
-      return res.status(400).json({ 
-        error: 'Pagamento ainda não foi processado',
-        paymentStatus: paymentIntent.status
-      });
-    }
-    
-    if (DEMO_MODE && paymentIntent.status === 'requires_payment_method') {
-      console.log(`[DEMO MODE] Simulando aprovação do pagamento ${paymentIntent.id}`);
-    }
-
     await db
       .update(appointments)
       .set({
         status: 'confirmed',
-        paymentStatus: 'paid',
       })
       .where(eq(appointments.id, appointmentId));
 

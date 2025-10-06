@@ -13,14 +13,7 @@ export default function BookingLayout() {
       <Stack.Screen
         name="verify"
         options={{
-          title: 'Verificação',
-          presentation: 'card',
-        }}
-      />
-      <Stack.Screen
-        name="payment"
-        options={{
-          title: 'Pagamento',
+          title: 'Confirmação',
           presentation: 'card',
         }}
       />
