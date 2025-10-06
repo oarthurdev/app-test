@@ -6,7 +6,6 @@ import { users, services, businessHours, appointments, notifications } from '../
 import { eq, and, gte, lte, desc } from 'drizzle-orm';
 import { hashPassword, comparePassword, generateToken, authenticateToken, requireRole, AuthRequest } from './auth';
 import Stripe from 'stripe';
-import twilio from 'twilio';
 import { Expo, ExpoPushMessage } from 'expo-server-sdk';
 
 dotenv.config();
@@ -19,12 +18,39 @@ app.use(express.json());
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
-const twilioClient = twilio(
-  process.env.TWILIO_ACCOUNT_SID,
-  process.env.TWILIO_AUTH_TOKEN
-);
-
 const expo = new Expo();
+
+// Função para enviar mensagem via Z-API WhatsApp
+async function sendWhatsAppMessage(phone: string, message: string) {
+  try {
+    const zapiUrl = `https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`;
+    
+    const response = await fetch(zapiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Client-Token': process.env.ZAPI_CLIENT_TOKEN || '',
+      },
+      body: JSON.stringify({
+        phone: phone.replace(/\D/g, ''), // Remove caracteres não numéricos
+        message: message,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('Erro ao enviar WhatsApp:', errorData);
+      throw new Error('Falha ao enviar mensagem via WhatsApp');
+    }
+
+    const data = await response.json();
+    console.log('WhatsApp enviado com sucesso:', data);
+    return data;
+  } catch (error) {
+    console.error('Erro ao enviar WhatsApp:', error);
+    throw error;
+  }
+}
 
 app.post('/api/auth/register', async (req, res) => {
   try {
@@ -369,6 +395,9 @@ app.post('/api/appointments', authenticateToken, async (req: AuthRequest, res) =
       return res.status(400).json({ error: 'Horário já reservado' });
     }
 
+    // Gerar código de verificação de 6 dígitos
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
     const [newAppointment] = await db
       .insert(appointments)
       .values({
@@ -376,8 +405,9 @@ app.post('/api/appointments', authenticateToken, async (req: AuthRequest, res) =
         serviceId,
         professionalId: service.professionalId,
         appointmentDate: new Date(appointmentDate),
-        status: 'confirmed',
+        status: 'pending',
         paymentStatus: 'pending',
+        stripePaymentIntentId: verificationCode, // Armazenar código temporariamente
       })
       .returning();
 
@@ -394,6 +424,26 @@ app.post('/api/appointments', authenticateToken, async (req: AuthRequest, res) =
       hour: '2-digit',
       minute: '2-digit',
     });
+
+    // Enviar código de verificação via WhatsApp
+    if (client && process.env.ZAPI_INSTANCE_ID) {
+      try {
+        const message = `🎉 *Agendamento Confirmado!*\n\n` +
+          `Olá ${client.name}!\n\n` +
+          `Seu agendamento foi realizado com sucesso:\n\n` +
+          `📅 *Data:* ${appointmentDateFormatted}\n` +
+          `💇 *Serviço:* ${service.name}\n` +
+          `💰 *Valor:* R$ ${parseFloat(service.price).toFixed(2)}\n\n` +
+          `🔐 *Código de Verificação:* ${verificationCode}\n\n` +
+          `Use este código para confirmar seu agendamento.\n\n` +
+          `Obrigado por escolher nossos serviços! 🌟`;
+
+        await sendWhatsAppMessage(client.phone, message);
+      } catch (whatsappError) {
+        console.error('Erro ao enviar WhatsApp:', whatsappError);
+        // Não falha o agendamento se o WhatsApp falhar
+      }
+    }
 
     await createNotification(
       service.professionalId,
@@ -472,6 +522,75 @@ app.post('/api/appointments/:id/mark-paid', authenticateToken, async (req: AuthR
   }
 });
 
+app.post('/api/appointments/verify-code', authenticateToken, async (req: AuthRequest, res) => {
+  try {
+    const { appointmentId, verificationCode } = req.body;
+
+    const [appointment] = await db
+      .select()
+      .from(appointments)
+      .where(eq(appointments.id, appointmentId))
+      .limit(1);
+
+    if (!appointment) {
+      return res.status(404).json({ error: 'Agendamento não encontrado' });
+    }
+
+    if (appointment.clientId !== req.userId) {
+      return res.status(403).json({ error: 'Você não tem permissão para verificar este agendamento' });
+    }
+
+    // Verificar código
+    if (appointment.stripePaymentIntentId !== verificationCode) {
+      return res.status(400).json({ error: 'Código de verificação inválido' });
+    }
+
+    // Atualizar status para confirmado
+    await db
+      .update(appointments)
+      .set({
+        status: 'confirmed',
+        stripePaymentIntentId: null, // Limpar código usado
+      })
+      .where(eq(appointments.id, appointmentId));
+
+    const [client] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, appointment.clientId))
+      .limit(1);
+
+    // Enviar confirmação via WhatsApp
+    if (client && process.env.ZAPI_INSTANCE_ID) {
+      try {
+        const message = `✅ *Agendamento Verificado com Sucesso!*\n\n` +
+          `Olá ${client.name}!\n\n` +
+          `Seu agendamento foi confirmado e está aguardando o dia:\n\n` +
+          `📅 *Data:* ${appointment.appointmentDate.toLocaleDateString('pt-BR', {
+            weekday: 'long',
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+          })}\n` +
+          `🕐 *Horário:* ${appointment.appointmentDate.toLocaleTimeString('pt-BR', {
+            hour: '2-digit',
+            minute: '2-digit',
+          })}\n\n` +
+          `Nos vemos em breve! 🎉`;
+
+        await sendWhatsAppMessage(client.phone, message);
+      } catch (whatsappError) {
+        console.error('Erro ao enviar WhatsApp de confirmação:', whatsappError);
+      }
+    }
+
+    res.json({ message: 'Código verificado com sucesso e agendamento confirmado' });
+  } catch (error) {
+    console.error('Erro ao verificar código:', error);
+    res.status(500).json({ error: 'Erro ao verificar código' });
+  }
+});
+
 app.post('/api/payments/confirm', authenticateToken, async (req: AuthRequest, res) => {
   try {
     const { appointmentId } = req.body;
@@ -496,24 +615,6 @@ app.post('/api/payments/confirm', authenticateToken, async (req: AuthRequest, re
         status: 'confirmed',
       })
       .where(eq(appointments.id, appointmentId));
-
-    const [client] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, appointment.clientId))
-      .limit(1);
-
-    if (client && process.env.TWILIO_PHONE_NUMBER) {
-      try {
-        await twilioClient.messages.create({
-          body: `Seu agendamento foi confirmado! Data: ${appointment.appointmentDate.toLocaleDateString('pt-BR')}`,
-          from: process.env.TWILIO_PHONE_NUMBER,
-          to: client.phone,
-        });
-      } catch (smsError) {
-        console.error('Erro ao enviar SMS:', smsError);
-      }
-    }
 
     res.json({ message: 'Pagamento confirmado e agendamento aprovado' });
   } catch (error) {

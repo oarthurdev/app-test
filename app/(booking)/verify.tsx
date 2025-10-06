@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { StyleSheet, View, Alert, ScrollView } from 'react-native';
+import { StyleSheet, View, Alert, ScrollView, TextInput } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -16,13 +16,15 @@ export default function VerifyScreen() {
   const { serviceId, appointmentDate } = useLocalSearchParams();
   const { user, token } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [verificationCode, setVerificationCode] = useState('');
 
   const date = new Date(appointmentDate as string);
 
   const handleConfirm = async () => {
     setLoading(true);
     try {
-      const response = await fetch(`${API_URL}/api/appointments`, {
+      const response = await fetch(`${API_URL}/api/appointments/request-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -31,17 +33,51 @@ export default function VerifyScreen() {
         body: JSON.stringify({
           serviceId: Number(serviceId),
           appointmentDate: appointmentDate,
+          phone: user?.phone,
         }),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Erro ao criar agendamento');
+        throw new Error(error.error || 'Erro ao solicitar código de verificação');
+      }
+
+      setCodeSent(true);
+      Alert.alert(
+        'Código Enviado! ✅',
+        'Um código de verificação foi enviado para o seu WhatsApp. Por favor, digite-o abaixo.'
+      );
+    } catch (error: any) {
+      Alert.alert('Erro', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyCode = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/appointments/verify-code`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          serviceId: Number(serviceId),
+          appointmentDate: appointmentDate,
+          code: verificationCode,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao verificar o código');
       }
 
       Alert.alert(
         'Sucesso! 🎉',
-        'Seu agendamento foi confirmado! Você receberá uma confirmação por SMS.\n\nO pagamento será realizado após o serviço.',
+        'Seu agendamento foi confirmado! Você receberá uma confirmação por WhatsApp.\n\nO pagamento será realizado após o serviço.',
         [
           {
             text: 'OK',
@@ -75,7 +111,7 @@ export default function VerifyScreen() {
         </View>
       </LinearGradient>
 
-      <ScrollView 
+      <ScrollView
         style={styles.content}
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -140,26 +176,69 @@ export default function VerifyScreen() {
         <View style={styles.warningCard}>
           <Ionicons name="information-circle" size={24} color={theme.colors.info} />
           <ThemedText style={styles.warningText}>
-            Verifique seus dados antes de continuar para o pagamento.
+            Verifique seus dados antes de continuar.
           </ThemedText>
         </View>
 
-        <View style={styles.actions}>
-          <Button
-            title="Confirmar e Pagar"
-            onPress={handleConfirm}
-            loading={loading}
-            fullWidth
-            size="lg"
-          />
+        {codeSent && (
+          <Card style={styles.codeCard}>
+            <View style={styles.codeHeader}>
+              <Ionicons name="lock-closed" size={24} color={theme.colors.primary} />
+              <ThemedText style={styles.codeTitle}>Código de Verificação</ThemedText>
+            </View>
+            <ThemedText style={styles.codeDescription}>
+              Digite o código de 6 dígitos enviado para seu WhatsApp
+            </ThemedText>
+            <TextInput
+              style={styles.codeInput}
+              value={verificationCode}
+              onChangeText={setVerificationCode}
+              placeholder="000000"
+              keyboardType="number-pad"
+              maxLength={6}
+              placeholderTextColor={theme.colors.text.tertiary}
+            />
+          </Card>
+        )}
 
-          <Button
-            title="Voltar"
-            onPress={() => router.back()}
-            variant="outline"
-            fullWidth
-            disabled={loading}
-          />
+        <View style={styles.actions}>
+          {!codeSent ? (
+            <>
+              <Button
+                title="Solicitar Código"
+                onPress={handleConfirm}
+                loading={loading}
+                fullWidth
+                size="lg"
+              />
+
+              <Button
+                title="Voltar"
+                onPress={() => router.back()}
+                variant="outline"
+                fullWidth
+                disabled={loading}
+              />
+            </>
+          ) : (
+            <>
+              <Button
+                title="Verificar e Confirmar"
+                onPress={handleVerifyCode}
+                loading={loading}
+                fullWidth
+                size="lg"
+              />
+
+              <Button
+                title="Reenviar Código"
+                onPress={handleConfirm}
+                variant="outline"
+                fullWidth
+                disabled={loading}
+              />
+            </>
+          )}
         </View>
       </ScrollView>
     </ThemedView>
@@ -264,5 +343,36 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: theme.spacing.md,
+  },
+  codeCard: {
+    marginBottom: theme.spacing.lg,
+    padding: theme.spacing.md,
+  },
+  codeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    marginBottom: theme.spacing.md,
+  },
+  codeTitle: {
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.primary,
+  },
+  codeDescription: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    marginBottom: theme.spacing.md,
+    lineHeight: 20,
+  },
+  codeInput: {
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.md,
+    fontSize: theme.fontSize.lg,
+    fontWeight: theme.fontWeight.bold,
+    textAlign: 'center',
+    color: theme.colors.text.primary,
   },
 });
