@@ -14,6 +14,8 @@ import { Card } from '@/components/ui/Card';
 import { theme } from '@/constants/Theme';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 
 const NOTIFICATION_ICONS: Record<string, keyof typeof Ionicons.glyphMap> = {
   appointment: 'calendar',
@@ -34,6 +36,12 @@ export default function NotificationsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
 
+  useFocusEffect(
+    useCallback(() => {
+      loadNotifications();
+    }, [loadNotifications])
+  );
+
   const onRefresh = async () => {
     setRefreshing(true);
     await loadNotifications();
@@ -44,10 +52,14 @@ export default function NotificationsScreen() {
     ? notifications.filter(n => !n.read)
     : notifications;
 
-  const handleNotificationPress = (notificationId: number, isRead: boolean) => {
+  const handleNotificationPress = async (notificationId: number, isRead: boolean) => {
     if (!isRead) {
-      markAsRead(notificationId);
+      await markAsRead(notificationId);
     }
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
   };
 
   const getNotificationIcon = (type: string): keyof typeof Ionicons.glyphMap => {
@@ -125,7 +137,7 @@ export default function NotificationsScreen() {
             </TouchableOpacity>
           </View>
           {unreadCount > 0 && (
-            <TouchableOpacity onPress={markAllAsRead} style={styles.markAllButton}>
+            <TouchableOpacity onPress={handleMarkAllAsRead} style={styles.markAllButton}>
               <Ionicons name="checkmark-done" size={18} color={theme.colors.primary} />
               <ThemedText style={styles.markAllText}>Marcar todas</ThemedText>
             </TouchableOpacity>

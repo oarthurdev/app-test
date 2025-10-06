@@ -1,5 +1,5 @@
 
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { useAuth } from './AuthContext';
@@ -32,6 +32,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -98,7 +100,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     }
   };
 
-  const loadNotifications = async () => {
+  const loadNotifications = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -115,9 +117,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     } catch (error) {
       console.error('Error loading notifications:', error);
     }
-  };
+  }, [token]);
 
-  const markAsRead = async (notificationId: number) => {
+  const markAsRead = useCallback(async (notificationId: number) => {
     if (!token) return;
 
     try {
@@ -134,9 +136,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
-  };
+  }, [token]);
 
-  const markAllAsRead = async () => {
+  const markAllAsRead = useCallback(async () => {
     if (!token) return;
 
     try {
@@ -151,7 +153,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     } catch (error) {
       console.error('Error marking all notifications as read:', error);
     }
-  };
+  }, [token]);
 
   return (
     <NotificationContext.Provider
