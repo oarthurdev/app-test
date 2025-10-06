@@ -26,7 +26,11 @@ dotenv.config();
 const app = express();
 const PORT = Number(process.env.PORT) || 3001;
 
-app.use(cors());
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
+
 app.use(express.json());
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
