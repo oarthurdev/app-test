@@ -26,9 +26,13 @@ Aplicativo móvel desenvolvido com Expo/React Native para agendamento de serviç
 
 ### Frontend (`app/`)
 - `(auth)/`: Telas de login e registro
-- `(tabs)/`: Navegação principal (serviços, agendamentos, perfil, admin)
+- `(tabs)/`: Navegação principal (serviços, agendamentos, notificações, perfil, admin)
 - `(booking)/`: Fluxo de agendamento (seleção de serviço, data/hora, verificação, pagamento)
 - `(admin)/`: Painel administrativo para profissionais
+
+### Contextos (`contexts/`)
+- `AuthContext.tsx`: Gerenciamento de autenticação e sessão
+- `NotificationContext.tsx`: Gerenciamento de notificações com polling automático
 
 ### Banco de Dados (`shared/schema.ts`)
 - `users`: Usuários (clientes e profissionais)
@@ -98,6 +102,8 @@ As seguintes variáveis estão configuradas:
 - ✅ Tela de verificação de dados do cliente
 - ✅ Integração com Stripe para pagamentos (modo demonstração documentado)
 - ✅ Envio de SMS de confirmação via Twilio
+- ✅ Sistema de notificações em tempo real com polling automático
+- ✅ Área dedicada de notificações com filtros e badge de contador
 - ✅ Persistência de dados em PostgreSQL
 - ✅ **UI/UX moderna e profissional** (atualização recente - Outubro 2025)
 
@@ -142,6 +148,18 @@ Implementado um sistema de design completo e consistente com:
   - Cards informativos com ícones
   - Gradiente no header
   
+- **Notificações (notifications.tsx)** [NOVO - Outubro 2025]:
+  - Área dedicada para notificações do sistema
+  - Três filtros: "Todas", "Não lidas", "Lidas"
+  - Badge com contador de não lidas na aba
+  - Cards modernos com ícones por tipo (agendamento, pagamento, lembrete)
+  - Timestamp relativo (ex: "5 min atrás", "2h atrás")
+  - Marcar como lida individualmente ou todas de uma vez
+  - Pull-to-refresh para atualização manual
+  - Polling automático a cada 30 segundos
+  - Estados vazios adaptativos para cada filtro
+  - Visível apenas para profissionais
+  
 - **Admin (admin.tsx)**:
   - Formulários organizados com seções claras
   - Seletor de dias da semana horizontal e visual
@@ -171,6 +189,27 @@ Implementado um sistema de design completo e consistente com:
 - ✅ Hierarquia visual clara com tipografia consistente
 - ✅ Sombras e elevações para profundidade
 - ✅ Espaçamentos harmoniosos em toda a interface
+
+### Área de Notificações (Outubro 2025)
+Sistema completo de notificações implementado com:
+
+**Funcionalidades:**
+- ✅ Aba dedicada na navegação principal (visível apenas para profissionais)
+- ✅ Badge com contador de notificações não lidas
+- ✅ Três filtros de visualização: Todas, Não lidas, Lidas
+- ✅ Cards de notificação com informações organizadas
+- ✅ Ícones contextuais por tipo (calendário, cartão, alarme)
+- ✅ Timestamp relativo intuitivo
+- ✅ Marcar como lida individual ou em massa
+- ✅ Pull-to-refresh para atualização manual
+- ✅ Polling automático a cada 30 segundos
+
+**Implementação Técnica:**
+- ✅ Context API com useCallback para performance
+- ✅ useFocusEffect para carregamento ao focar na tela
+- ✅ Atualização otimista do estado para UI responsiva
+- ✅ Sem race conditions ou loops de carregamento
+- ✅ Backend com endpoints REST para CRUD de notificações
 
 ## Sobre o Pagamento
 

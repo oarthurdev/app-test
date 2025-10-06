@@ -34,7 +34,7 @@ export default function NotificationsScreen() {
   } = useNotifications();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [filter, setFilter] = useState<'all' | 'unread'>('all');
+  const [filter, setFilter] = useState<'all' | 'unread' | 'read'>('all');
 
   useFocusEffect(
     useCallback(() => {
@@ -48,8 +48,9 @@ export default function NotificationsScreen() {
     setRefreshing(false);
   };
 
-  const filteredNotifications = filter === 'unread'
-    ? notifications.filter(n => !n.read)
+  const filteredNotifications = 
+    filter === 'unread' ? notifications.filter(n => !n.read)
+    : filter === 'read' ? notifications.filter(n => n.read)
     : notifications;
 
   const handleNotificationPress = async (notificationId: number, isRead: boolean) => {
@@ -135,6 +136,16 @@ export default function NotificationsScreen() {
                 Não lidas ({unreadCount})
               </ThemedText>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.filterButton, filter === 'read' && styles.filterButtonActive]}
+              onPress={() => setFilter('read')}
+            >
+              <ThemedText
+                style={[styles.filterButtonText, filter === 'read' && styles.filterButtonTextActive]}
+              >
+                Lidas ({notifications.length - unreadCount})
+              </ThemedText>
+            </TouchableOpacity>
           </View>
           {unreadCount > 0 && (
             <TouchableOpacity onPress={handleMarkAllAsRead} style={styles.markAllButton}>
@@ -161,7 +172,11 @@ export default function NotificationsScreen() {
           <View style={styles.emptyContainer}>
             <View style={styles.emptyIcon}>
               <Ionicons
-                name={filter === 'unread' ? 'checkmark-done-circle' : 'notifications-off'}
+                name={
+                  filter === 'unread' ? 'checkmark-done-circle' 
+                  : filter === 'read' ? 'mail-open' 
+                  : 'notifications-off'
+                }
                 size={80}
                 color={theme.colors.text.tertiary}
               />
@@ -169,11 +184,15 @@ export default function NotificationsScreen() {
             <ThemedText style={styles.emptyTitle}>
               {filter === 'unread'
                 ? 'Nenhuma notificação não lida'
+                : filter === 'read'
+                ? 'Nenhuma notificação lida'
                 : 'Nenhuma notificação ainda'}
             </ThemedText>
             <ThemedText style={styles.emptyText}>
               {filter === 'unread'
                 ? 'Você está em dia com todas as suas notificações!'
+                : filter === 'read'
+                ? 'Você ainda não leu nenhuma notificação.'
                 : 'Quando algo importante acontecer, você será notificado aqui.'}
             </ThemedText>
           </View>
