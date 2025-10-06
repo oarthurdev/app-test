@@ -23,6 +23,86 @@ export default function ProfileScreen() {
     }
   }, [user]);
 
+  if (!user) {
+    return (
+      <ThemedView style={styles.container}>
+        <LinearGradient
+          colors={[theme.colors.primary, theme.colors.primaryDark]}
+          style={styles.headerGradient}
+        >
+          <View style={styles.header}>
+            <View style={styles.avatarContainer}>
+              <View style={styles.avatar}>
+                <Ionicons name="person" size={48} color="#fff" />
+              </View>
+            </View>
+            <ThemedText style={styles.userName}>Menu</ThemedText>
+            <ThemedText style={styles.userRole}>Navegando como Cliente</ThemedText>
+          </View>
+        </LinearGradient>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Área Profissional</ThemedText>
+            
+            <Card style={styles.menuCard}>
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={() => router.push('/(auth)/login')}
+              >
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name="briefcase" size={24} color={theme.colors.primary} />
+                </View>
+                <View style={styles.menuContent}>
+                  <ThemedText style={styles.menuTitle}>Login Profissional</ThemedText>
+                  <ThemedText style={styles.menuDescription}>
+                    Acesse sua área para gerenciar serviços e agendamentos
+                  </ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
+              </TouchableOpacity>
+            </Card>
+
+            <Card style={styles.menuCard}>
+              <TouchableOpacity 
+                style={styles.menuItem}
+                onPress={() => router.push('/(auth)/register')}
+              >
+                <View style={styles.menuIconContainer}>
+                  <Ionicons name="person-add" size={24} color={theme.colors.primary} />
+                </View>
+                <View style={styles.menuContent}>
+                  <ThemedText style={styles.menuTitle}>Cadastro Profissional</ThemedText>
+                  <ThemedText style={styles.menuDescription}>
+                    Crie sua conta e comece a oferecer seus serviços
+                  </ThemedText>
+                </View>
+                <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
+              </TouchableOpacity>
+            </Card>
+          </View>
+
+          <View style={styles.section}>
+            <ThemedText style={styles.sectionTitle}>Informações</ThemedText>
+            
+            <Card style={styles.infoTextCard}>
+              <Ionicons name="information-circle" size={24} color={theme.colors.primary} style={{marginBottom: theme.spacing.sm}} />
+              <ThemedText style={styles.infoTextTitle}>Como cliente</ThemedText>
+              <ThemedText style={styles.infoTextDescription}>
+                Você pode navegar e agendar serviços sem precisar criar uma conta. 
+                Basta preencher seus dados no momento do agendamento!
+              </ThemedText>
+            </Card>
+          </View>
+
+          <View style={styles.footer}>
+            <ThemedText style={styles.footerText}>Versão 1.0.0</ThemedText>
+          </View>
+        </ScrollView>
+      </ThemedView>
+    );
+  }
+
   const setupPushNotifications = async () => {
     try {
       const pushToken = await registerForPushNotifications();
@@ -314,5 +394,52 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: theme.fontSize.sm,
     color: theme.colors.text.tertiary,
+  },
+  menuCard: {
+    marginBottom: theme.spacing.md,
+    padding: 0,
+    overflow: 'hidden',
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: theme.spacing.lg,
+  },
+  menuIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: `${theme.colors.primary}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: theme.spacing.md,
+  },
+  menuContent: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.text.primary,
+    marginBottom: 4,
+  },
+  menuDescription: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
+  },
+  infoTextCard: {
+    padding: theme.spacing.lg,
+  },
+  infoTextTitle: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.bold,
+    color: theme.colors.text.primary,
+    marginBottom: theme.spacing.sm,
+  },
+  infoTextDescription: {
+    fontSize: theme.fontSize.sm,
+    color: theme.colors.text.secondary,
+    lineHeight: 20,
   },
 });
