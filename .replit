@@ -7,6 +7,7 @@ channel = "stable-25_05"
 [[ports]]
 localPort = 3001
 externalPort = 3001
+exposeLocalhost = true
 
 [[ports]]
 localPort = 5000
@@ -101,7 +102,7 @@ outputType = "webview"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "EXPO_PUBLIC_API_URL=https://b1865478-a86b-4782-b71f-4430cfe93716-00-2erq59hpuqbxy.janeway.replit.dev:3001 EXPO_METRO_PORT=5000 npx expo start --web --port 5000"
+args = "EXPO_PUBLIC_API_URL=https://0fee0889-84d4-4510-ad4f-4248578feda7-00-r9bya9hyzayw.janeway.replit.dev:3001 EXPO_METRO_PORT=5000 npx expo start --web --port 5000"
 waitForPort = 5000
 
 [agent]
@@ -109,5 +110,9 @@ expertMode = true
 
 [deployment]
 deploymentTarget = "vm"
-run = ["bash", "-c", "npm run server & EXPO_PUBLIC_API_URL=https://$REPL_SLUG.$REPL_OWNER.repl.co EXPO_METRO_PORT=5000 npx expo start --web --port 5000"]
+run = [
+  "bash",
+  "-c",
+  "npm run server & EXPO_PUBLIC_API_URL=https://$REPL_SLUG.$REPL_OWNER.repl.co EXPO_METRO_PORT=5000 npx expo start --web --port 5000",
+]
 build = ["npm", "install"]
