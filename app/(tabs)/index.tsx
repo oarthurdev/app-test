@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { StyleSheet, FlatList, ActivityIndicator, View, RefreshControl, Animated, TextInput } from 'react-native';
+import { StyleSheet, FlatList, ActivityIndicator, View, RefreshControl, Animated, TextInput, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
@@ -31,10 +31,8 @@ export default function HomeScreen() {
   const [scrollY] = useState(new Animated.Value(0));
 
   useEffect(() => {
-    if (user) {
-      loadServices();
-    }
-  }, [user]);
+    loadServices();
+  }, []);
 
   const loadServices = async () => {
     try {
@@ -176,12 +174,26 @@ export default function HomeScreen() {
         >
           <View style={styles.header}>
             <View style={styles.welcomeSection}>
-              <ThemedText style={styles.greeting}>Olá, {user?.name?.split(' ')[0]}! 👋</ThemedText>
+              <ThemedText style={styles.greeting}>
+                {user ? `Olá, ${user.name?.split(' ')[0]}! 👋` : 'Bem-vindo! 👋'}
+              </ThemedText>
               <ThemedText style={styles.headerTitle}>Explore Nossos Serviços</ThemedText>
               <ThemedText style={styles.headerSubtitle}>
                 Escolha o melhor para você
               </ThemedText>
             </View>
+            
+            {!user && (
+              <TouchableOpacity 
+                style={styles.professionalLoginButton}
+                onPress={() => router.push('/(auth)/login')}
+              >
+                <Ionicons name="briefcase" size={16} color="#fff" />
+                <ThemedText style={styles.professionalLoginText}>
+                  Área Profissional
+                </ThemedText>
+              </TouchableOpacity>
+            )}
             
             <View style={styles.statsContainer}>
               <View style={styles.statCard}>
@@ -469,5 +481,22 @@ const styles = StyleSheet.create({
     fontSize: theme.fontSize.md,
     color: theme.colors.text.secondary,
     textAlign: 'center',
+  },
+  professionalLoginButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingVertical: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.full,
+    marginTop: theme.spacing.md,
+    alignSelf: 'flex-start',
+    ...theme.shadows.sm,
+  },
+  professionalLoginText: {
+    fontSize: theme.fontSize.sm,
+    fontWeight: theme.fontWeight.semibold,
+    color: '#fff',
   },
 });
