@@ -26,7 +26,7 @@ localPort = 37437
 externalPort = 3002
 
 [workflows]
-runButton = "Project"
+runButton = "Start Backend"
 
 [[workflows.workflow]]
 name = "Dev Server"
@@ -104,6 +104,15 @@ outputType = "webview"
 task = "shell.exec"
 args = "EXPO_PUBLIC_API_URL=https://0fee0889-84d4-4510-ad4f-4248578feda7-00-r9bya9hyzayw.janeway.replit.dev:3001 EXPO_METRO_PORT=5000 npx expo start --web --port 5000"
 waitForPort = 5000
+
+[[workflows.workflow]]
+name = "Start Backend"
+author = 48374978
+mode = "sequential"
+
+[[workflows.workflow.tasks]]
+task = "shell.exec"
+args = "npm run server"
 
 [agent]
 expertMode = true

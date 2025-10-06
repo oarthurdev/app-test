@@ -45,10 +45,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   useEffect(() => {
     if (user?.role === 'professional' && token) {
       loadNotifications();
-      const interval = setInterval(loadNotifications, 30000); // Poll every 30 seconds
+      const interval = setInterval(loadNotifications, 15000); // Poll every 15 seconds
       return () => clearInterval(interval);
     }
-  }, [user, token]);
+  }, [user, token, loadNotifications]);
 
   useEffect(() => {
     const count = notifications.filter(n => !n.read).length;
