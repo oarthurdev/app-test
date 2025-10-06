@@ -3,9 +3,9 @@
 **Status**: ✅ Totalmente configurado e funcionando no Replit (Outubro 2025)
 
 ## Visão Geral
-Aplicativo móvel desenvolvido com Expo/React Native para agendamento de serviços com dois tipos de usuários:
-- **Clientes**: Podem visualizar serviços, agendar horários e fazer pagamentos
-- **Profissionais**: Podem cadastrar serviços e definir horários de funcionamento
+Aplicativo móvel desenvolvido com Expo/React Native para agendamento de serviços focado em clientes:
+- **Clientes**: Navegam livremente sem necessidade de login/cadastro. Preenchem seus dados apenas ao agendar um serviço
+- **Profissionais**: Acessam área administrativa via login para cadastrar serviços, definir horários, gerenciar notificações e visualizar agendamentos
 
 ## Tecnologias Utilizadas
 - **Frontend**: Expo, React Native, TypeScript
@@ -35,10 +35,11 @@ Aplicativo móvel desenvolvido com Expo/React Native para agendamento de serviç
 - `NotificationContext.tsx`: Gerenciamento de notificações com polling automático
 
 ### Banco de Dados (`shared/schema.ts`)
-- `users`: Usuários (clientes e profissionais)
+- `users`: Usuários (apenas profissionais cadastrados)
 - `services`: Serviços oferecidos
 - `business_hours`: Horários de funcionamento
-- `appointments`: Agendamentos
+- `appointments`: Agendamentos (suporta clientes autenticados e não autenticados via campos guest*)
+- `notifications`: Notificações para profissionais
 
 ## Como Testar
 
@@ -54,13 +55,15 @@ Um usuário profissional já foi criado:
 4. Cadastrar horários de funcionamento (dia da semana, horário inicial e final)
 
 ### 3. Fluxo do Cliente
-1. Criar uma conta nova (aba "Cadastro")
-2. Navegar pela lista de serviços
+1. Abrir o app (sem necessidade de login)
+2. Navegar pela lista de serviços disponíveis
 3. Selecionar um serviço
 4. Escolher data e horário disponível
-5. Verificar dados
-6. Realizar pagamento (simulado)
-7. Receber confirmação (SMS seria enviado em produção)
+5. Preencher dados pessoais (nome, email, telefone)
+6. Verificar agendamento
+7. Receber código de verificação por SMS
+8. Confirmar agendamento com o código
+9. Agendamento confirmado!
 
 ## Variáveis de Ambiente
 As seguintes variáveis estão configuradas:
@@ -92,17 +95,20 @@ As seguintes variáveis estão configuradas:
 - **Deployment**: Configurado com VM para manter estado do servidor e rodar ambos frontend e backend simultaneamente
 
 ## Características Implementadas
-- ✅ Login e registro com validação
-- ✅ Dois tipos de permissão (cliente e profissional)
-- ✅ Menu admin visível apenas para profissionais
+- ✅ **Acesso sem login para clientes** - navegação livre de serviços sem necessidade de cadastro (Outubro 2025)
+- ✅ **Login exclusivo para profissionais** - área administrativa protegida
+- ✅ **Botão "Área Profissional"** na tela inicial para acesso de profissionais
+- ✅ **Menu adaptativo** - mostra opções de login quando não autenticado
+- ✅ **Formulário de dados do cliente** no fluxo de agendamento
+- ✅ **Suporte a agendamentos de clientes não autenticados** no backend
 - ✅ Cadastro de serviços e horários pelo profissional
 - ✅ Calendário para seleção de datas
 - ✅ Verificação de horários disponíveis
 - ✅ Bloqueio de horários já agendados (pending ou confirmed)
-- ✅ Tela de verificação de dados do cliente
+- ✅ Validação de dados do cliente (email, telefone) com feedback visual
 - ✅ Integração com Stripe para pagamentos (modo demonstração documentado)
-- ✅ Envio de SMS de confirmação via Twilio
-- ✅ Sistema de notificações em tempo real com polling automático
+- ✅ Envio de código de verificação via SMS
+- ✅ Sistema de notificações em tempo real para profissionais
 - ✅ Área dedicada de notificações com filtros e badge de contador
 - ✅ Persistência de dados em PostgreSQL
 - ✅ **UI/UX moderna e profissional** (atualização recente - Outubro 2025)
