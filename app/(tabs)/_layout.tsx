@@ -16,6 +16,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { user } = useAuth();
   const { unreadCount } = useNotifications();
+  const isProfessional = user?.role === 'professional';
 
   return (
     <Tabs
@@ -38,51 +39,57 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Serviços',
-          tabBarIcon: ({ color }) => <Ionicons name="cut" size={24} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="cut" size={24} color={color} />
+          ),
         }}
       />
       <Tabs.Screen
         name="appointments"
         options={{
           title: 'Agendamentos',
-          tabBarIcon: ({ color }) => <Ionicons name="calendar" size={24} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="calendar" size={24} color={color} />
+          ),
         }}
       />
-      {user?.role === 'professional' && (
-        <>
-          <Tabs.Screen
-            name="notifications"
-            options={{
-              title: 'Notificações',
-              tabBarIcon: ({ color }) => (
-                <View>
-                  <Ionicons name="notifications" size={24} color={color} />
-                  {unreadCount > 0 && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>
-                        {unreadCount > 99 ? '99+' : unreadCount}
-                      </Text>
-                    </View>
-                  )}
+      <Tabs.Screen
+        name="notifications"
+        options={{
+          title: 'Notificações',
+          href: isProfessional ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <View style={{ width: 24, height: 24 }}>
+              <Ionicons name="notifications" size={24} color={color} />
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </Text>
                 </View>
-              ),
-              tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
-            }}
-          />
-          <Tabs.Screen
-            name="admin"
-            options={{
-              title: 'Admin',
-              tabBarIcon: ({ color }) => <Ionicons name="settings" size={24} color={color} />,
-            }}
-          />
-        </>
-      )}
+              )}
+            </View>
+          ),
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+        }}
+      />
+      <Tabs.Screen
+        name="admin"
+        options={{
+          title: 'Admin',
+          href: isProfessional ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="settings" size={24} color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color }) => <Ionicons name="person" size={24} color={color} />,
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="person" size={24} color={color} />
+          ),
         }}
       />
     </Tabs>
