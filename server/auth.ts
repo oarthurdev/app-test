@@ -4,7 +4,7 @@ import { Request, Response, NextFunction } from 'express';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
 
-export interface AuthRequest extends Request {
+export interface AuthRequest extends Request<any, any, any> {
   userId?: number;
   userRole?: string;
 }
