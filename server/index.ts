@@ -590,6 +590,9 @@ app.post(
         100000 + Math.random() * 900000,
       ).toString();
 
+      const { v4: uuidv4 } = await import('uuid');
+      const guestClientId = userId ? null : uuidv4();
+
       const appointmentData: any = {
         serviceId,
         professionalId: service.professionalId,
@@ -605,6 +608,7 @@ app.post(
         appointmentData.guestName = guestName;
         appointmentData.guestEmail = guestEmail;
         appointmentData.guestPhone = phone;
+        appointmentData.guestClientId = guestClientId;
       }
 
       const [newAppointment] = await db
@@ -651,6 +655,7 @@ app.post(
       res.json({
         success: true,
         appointmentId: newAppointment.id,
+        guestClientId: guestClientId,
         message: "Código enviado via WhatsApp",
       });
     } catch (error) {
@@ -658,6 +663,37 @@ app.post(
       res
         .status(500)
         .json({ error: "Erro ao solicitar código de verificação" });
+    }
+  },
+);
+
+
+
+app.get(
+  "/api/appointments/guest/:guestClientId",
+  async (req, res) => {
+    try {
+      const { guestClientId } = req.params;
+
+      const guestAppointments = await db
+        .select({
+          id: appointments.id,
+          appointmentDate: appointments.appointmentDate,
+          status: appointments.status,
+          paymentStatus: appointments.paymentStatus,
+          serviceName: services.name,
+          servicePrice: services.price,
+          professionalName: users.name,
+        })
+        .from(appointments)
+        .leftJoin(services, eq(appointments.serviceId, services.id))
+        .leftJoin(users, eq(appointments.professionalId, users.id))
+        .where(eq(appointments.guestClientId, guestClientId));
+
+      res.json(guestAppointments);
+    } catch (error) {
+      console.error("Erro ao buscar agendamentos:", error);
+      res.status(500).json({ error: "Erro ao buscar agendamentos" });
     }
   },
 );
@@ -684,64 +720,22 @@ app.post(
           .json({ error: "Código de verificação inválido" });
       }
 
-      let clientId = appointment.clientId;
-      let tempClientToken: string | null = null;
-
-      // Se não tiver clientId, criar usuário temporário
-      if (!clientId) {
-        // Verificar se temos os dados do convidado
-        if (!appointment.guestName || !appointment.guestEmail || !appointment.guestPhone) {
-          return res.status(400).json({ error: "Dados do cliente incompletos" });
-        }
-
-        tempClientToken = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-
-        const [tempUser] = await db
-          .insert(users)
-          .values({
-            name: appointment.guestName,
-            email: appointment.guestEmail,
-            phone: appointment.guestPhone,
-            password: await hashPassword(Math.random().toString(36)),
-            role: 'temp_client',
-          })
-          .returning();
-
-        clientId = tempUser.id;
-      }
-
-      // Atualizar o agendamento
+      // Atualizar o agendamento para confirmado
       await db
         .update(appointments)
         .set({
           status: "confirmed",
           stripePaymentIntentId: null,
-          clientId: clientId,
-          tempClientToken: tempClientToken,
         })
         .where(eq(appointments.id, appointmentId));
 
-      let clientName: string;
-      let clientPhone: string;
-
-      if (clientId) {
-        const [client] = await db
-          .select()
-          .from(users)
-          .where(eq(users.id, clientId))
-          .limit(1);
-
-        if (client) {
-          clientName = client.name;
-          clientPhone = client.phone;
-        } else {
-          clientName = "Cliente";
-          clientPhone = "";
-        }
-      } else {
-        clientName = appointment.guestName || "Cliente";
-        clientPhone = appointment.guestPhone || "";
-      }
+      const clientName = appointment.clientId 
+        ? (await db.select().from(users).where(eq(users.id, appointment.clientId)).limit(1))[0]?.name || "Cliente"
+        : appointment.guestName || "Cliente";
+      
+      const clientPhone = appointment.clientId
+        ? (await db.select().from(users).where(eq(users.id, appointment.clientId)).limit(1))[0]?.phone || ""
+        : appointment.guestPhone || "";
 
       if (clientPhone && process.env.ZAPI_INSTANCE_ID) {
         try {
@@ -795,7 +789,7 @@ app.post(
 
       res.json({
         message: "Código verificado com sucesso e agendamento confirmado",
-        tempClientToken: tempClientToken,
+        guestClientId: appointment.guestClientId,
       });
     } catch (error) {
       console.error("Erro ao verificar código:", error);

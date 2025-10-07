@@ -52,43 +52,52 @@ const PAYMENT_CONFIG = {
 };
 
 export default function AppointmentsScreen() {
-  const { token, tempToken } = useAuth();
+  const { user, token, guestClientId } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
-    loadAppointments();
-  }, [token, tempToken]);
-
-  const loadAppointments = async () => {
+  const fetchAppointments = async () => {
     try {
-      let data = [];
-      
-      if (token) {
-        const response = await fetch(`${API_URL}/api/appointments/my`, {
+      let response;
+
+      if (token && user) {
+        // Cliente autenticado
+        response = await fetch(`${API_URL}/api/appointments/my`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        data = await response.json();
-      } else if (tempToken) {
-        const response = await fetch(`${API_URL}/api/appointments/temp/${tempToken}`);
-        data = await response.json();
+      } else if (guestClientId) {
+        // Cliente não autenticado (guest)
+        response = await fetch(`${API_URL}/api/appointments/guest/${guestClientId}`);
+      } else {
+        setLoading(false);
+        return;
       }
-      
+
+      if (!response.ok) throw new Error('Erro ao buscar agendamentos');
+
+      const data = await response.json();
       setAppointments(data);
     } catch (error) {
-      console.error('Erro ao carregar agendamentos:', error);
+      console.error('Erro ao buscar agendamentos:', error);
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
   };
 
+  useEffect(() => {
+    if (token || guestClientId) {
+      fetchAppointments();
+    } else {
+      setLoading(false);
+    }
+  }, [token, guestClientId]);
+
   const onRefresh = () => {
     setRefreshing(true);
-    loadAppointments();
+    fetchAppointments();
   };
 
   const renderAppointment = ({ item }: { item: Appointment }) => {

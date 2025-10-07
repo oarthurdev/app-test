@@ -14,7 +14,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function VerifyScreen() {
   const { serviceId, appointmentDate } = useLocalSearchParams();
-  const { user, token, setTempToken } = useAuth();
+  const { user, token, setGuestId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
@@ -82,6 +82,12 @@ export default function VerifyScreen() {
 
       const data = await response.json();
       setAppointmentId(data.appointmentId);
+      
+      // Salvar guestClientId se for um cliente não autenticado
+      if (data.guestClientId && !user) {
+        await setGuestId(data.guestClientId);
+      }
+      
       setCodeSent(true);
       Alert.alert(
         'Código Enviado! ✅',
@@ -125,11 +131,6 @@ export default function VerifyScreen() {
       }
 
       const data = await response.json();
-
-      // Salvar token temporário se for um convidado
-      if (data.tempClientToken && !user) {
-        await setTempToken(data.tempClientToken);
-      }
 
       Alert.alert(
         'Sucesso! 🎉',

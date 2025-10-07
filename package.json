@@ -34,6 +34,7 @@
     "@types/express": "^5.0.3",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^24.7.0",
+    "@types/uuid": "^10.0.0",
     "@types/ws": "^8.18.1",
     "babel-plugin-module-resolver": "^5.0.2",
     "babel-preset-expo": "^54.0.3",
@@ -75,6 +76,7 @@
     "stripe": "^19.0.0",
     "tsx": "^4.20.6",
     "twilio": "^5.10.2",
+    "uuid": "^13.0.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {
