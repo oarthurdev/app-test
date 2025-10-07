@@ -36,8 +36,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadStoredAuth = async () => {
     try {
-      const storedToken = await AsyncStorage.getItem('token');
-      const storedGuestId = await AsyncStorage.getItem('guestClientId');
+      const [storedToken, storedGuestId] = await Promise.all([
+        AsyncStorage.getItem('token'),
+        AsyncStorage.getItem('guestClientId')
+      ]);
 
       if (storedToken) {
         const response = await fetch(`${API_URL}/api/auth/me`, {
@@ -57,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (storedGuestId) {
         setGuestClientId(storedGuestId);
+        console.log('Guest Client ID carregado:', storedGuestId);
       }
     } catch (error) {
       console.error('Erro ao carregar autenticação:', error);
@@ -69,8 +72,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await AsyncStorage.setItem('guestClientId', id);
       setGuestClientId(id);
+      console.log('Guest Client ID salvo com sucesso:', id);
     } catch (error) {
       console.error('Erro ao salvar guestClientId:', error);
+      throw error;
     }
   };
 
@@ -124,11 +129,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await AsyncStorage.removeItem('token');
-      await AsyncStorage.removeItem('guestClientId');
+      await Promise.all([
+        AsyncStorage.removeItem('token'),
+        AsyncStorage.removeItem('guestClientId')
+      ]);
       setToken(null);
       setUser(null);
       setGuestClientId(null);
+      console.log('Logout realizado com sucesso');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
     }

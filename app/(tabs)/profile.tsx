@@ -20,7 +20,7 @@ import { useEffect } from "react";
 const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function ProfileScreen() {
-  const { user, logout, token } = useAuth();
+  const { user, logout, token, guestClientId } = useAuth();
   const { registerForPushNotifications } = useNotifications();
 
   useEffect(() => {
@@ -128,6 +128,24 @@ export default function ProfileScreen() {
                 conta. Basta preencher seus dados no momento do agendamento!
               </ThemedText>
             </Card>
+
+            {guestClientId && (
+              <Card style={[styles.infoTextCard, { backgroundColor: `${theme.colors.success}15`, borderLeftWidth: 4, borderLeftColor: theme.colors.success }]}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={24}
+                  color={theme.colors.success}
+                  style={{ marginBottom: theme.spacing.sm }}
+                />
+                <ThemedText style={[styles.infoTextTitle, { color: theme.colors.success }]}>
+                  Seus agendamentos estão salvos!
+                </ThemedText>
+                <ThemedText style={styles.infoTextDescription}>
+                  Você pode ver todos os seus agendamentos na aba "Agendamentos". 
+                  Seus dados estão armazenados de forma segura no dispositivo.
+                </ThemedText>
+              </Card>
+            )}
           </View>
 
           <View style={styles.footer}>

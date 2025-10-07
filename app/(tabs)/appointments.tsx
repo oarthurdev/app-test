@@ -95,6 +95,12 @@ export default function AppointmentsScreen() {
     }
   }, [token, guestClientId]);
 
+  useEffect(() => {
+    if (!loading && guestClientId && !user) {
+      console.log('Cliente não autenticado com ID:', guestClientId);
+    }
+  }, [loading, guestClientId, user]);
+
   const onRefresh = () => {
     setRefreshing(true);
     fetchAppointments();
