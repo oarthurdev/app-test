@@ -12,9 +12,11 @@ interface User {
 interface AuthContextType {
   user: User | null;
   token: string | null;
+  tempToken: string | null;
   login: (email: string, password: string) => Promise<void>;
   register: (name: string, email: string, phone: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
+  setTempToken: (token: string) => Promise<void>;
   loading: boolean;
 }
 
@@ -25,6 +27,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
+  const [tempToken, setTempTokenState] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -34,6 +37,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadStoredAuth = async () => {
     try {
       const storedToken = await AsyncStorage.getItem('token');
+      const storedTempToken = await AsyncStorage.getItem('tempToken');
+      
       if (storedToken) {
         const response = await fetch(`${API_URL}/api/auth/me`, {
           headers: {
@@ -49,11 +54,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await AsyncStorage.removeItem('token');
         }
       }
+      
+      if (storedTempToken) {
+        setTempTokenState(storedTempToken);
+      }
     } catch (error) {
       console.error('Erro ao carregar autenticação:', error);
     } finally {
       setLoading(false);
     }
+  };
+  
+  const setTempToken = async (token: string) => {
+    setTempTokenState(token);
+    await AsyncStorage.setItem('tempToken', token);
   };
 
   const login = async (email: string, password: string) => {
@@ -107,11 +121,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async () => {
     setUser(null);
     setToken(null);
+    setTempTokenState(null);
     await AsyncStorage.removeItem('token');
+    await AsyncStorage.removeItem('tempToken');
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, register, logout, loading }}>
+    <AuthContext.Provider value={{ user, token, tempToken, login, register, logout, setTempToken, loading }}>
       {children}
     </AuthContext.Provider>
   );

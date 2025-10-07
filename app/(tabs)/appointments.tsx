@@ -52,25 +52,31 @@ const PAYMENT_CONFIG = {
 };
 
 export default function AppointmentsScreen() {
-  const { token } = useAuth();
+  const { token, tempToken } = useAuth();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    if (token) {
-      loadAppointments();
-    }
-  }, [token]);
+    loadAppointments();
+  }, [token, tempToken]);
 
   const loadAppointments = async () => {
     try {
-      const response = await fetch(`${API_URL}/api/appointments/my`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
+      let data = [];
+      
+      if (token) {
+        const response = await fetch(`${API_URL}/api/appointments/my`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        data = await response.json();
+      } else if (tempToken) {
+        const response = await fetch(`${API_URL}/api/appointments/temp/${tempToken}`);
+        data = await response.json();
+      }
+      
       setAppointments(data);
     } catch (error) {
       console.error('Erro ao carregar agendamentos:', error);

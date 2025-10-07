@@ -421,108 +421,64 @@ app.post(
   authenticateToken,
   async (req: AuthRequest, res) => {
     try {
-      const { serviceId, appointmentDate } = req.body;
+      const { serviceId, appointmentDate, guestName, guestEmail, guestPhone } =
+        req.body;
 
-      const [service] = await db
-        .select()
-        .from(services)
-        .where(eq(services.id, serviceId))
-        .limit(1);
+      // Criar um token único para o cliente temporário
+      const tempClientToken = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
-      if (!service) {
-        return res.status(404).json({ error: "Serviço não encontrado" });
-      }
-
-      const existingAppointment = await db
-        .select()
-        .from(appointments)
-        .where(
-          and(
-            eq(appointments.serviceId, serviceId),
-            eq(appointments.appointmentDate, new Date(appointmentDate)),
-          ),
-        )
-        .limit(1);
-
-      if (existingAppointment.length > 0) {
-        return res.status(400).json({ error: "Horário já reservado" });
-      }
-
-      // Gerar código de verificação de 6 dígitos
-      const verificationCode = Math.floor(
-        100000 + Math.random() * 900000,
-      ).toString();
-
-      const [newAppointment] = await db
-        .insert(appointments)
+      // Criar usuário temporário
+      const [tempUser] = await db
+        .insert(users)
         .values({
-          clientId: req.userId!,
-          serviceId,
-          professionalId: service.professionalId,
-          appointmentDate: new Date(appointmentDate),
-          status: "pending",
-          paymentStatus: "pending",
-          stripePaymentIntentId: verificationCode, // Armazenar código temporariamente
+          name: guestName,
+          email: guestEmail,
+          phone: guestPhone,
+          password: await hashPassword(Math.random().toString(36)),
+          role: 'temp_client',
         })
         .returning();
 
-      const [client] = await db
+      const [appointment] = await db
+        .insert(appointments)
+        .values({
+          clientId: tempUser.id,
+          serviceId: Number(serviceId),
+          professionalId: 1, // This will be updated to the actual professional ID from service
+          appointmentDate: new Date(appointmentDate),
+          guestName,
+          guestEmail,
+          guestPhone,
+          tempClientToken,
+          status: "confirmed",
+          paymentStatus: "paid",
+        })
+        .returning();
+
+      const service = await db
         .select()
-        .from(users)
-        .where(eq(users.id, req.userId!))
+        .from(services)
+        .where(eq(services.id, Number(serviceId)))
         .limit(1);
 
-      const appointmentDateFormatted = new Date(appointmentDate).toLocaleString(
-        "pt-BR",
-        {
-          day: "2-digit",
-          month: "2-digit",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        },
-      );
-
-      // Enviar código de verificação via WhatsApp
-      if (client && process.env.ZAPI_INSTANCE_ID) {
-        try {
-          const message =
-            `🎉 *Agendamento Confirmado!*\n\n` +
-            `Olá ${client.name}!\n\n` +
-            `Seu agendamento foi realizado com sucesso:\n\n` +
-            `📅 *Data:* ${appointmentDateFormatted}\n` +
-            `💇 *Serviço:* ${service.name}\n` +
-            `💰 *Valor:* R$ ${parseFloat(service.price).toFixed(2)}\n\n` +
-            `🔐 *Código de Verificação:* ${verificationCode}\n\n` +
-            `Use este código para confirmar seu agendamento.\n\n` +
-            `Obrigado por escolher nossos serviços! 🌟`;
-
-          await sendWhatsAppMessage(client.phone, message);
-        } catch (whatsappError) {
-          console.error("Erro ao enviar WhatsApp:", whatsappError);
-          // Não falha o agendamento se o WhatsApp falhar
-        }
+      if (service.length > 0) {
+        await createNotification(
+          service[0].professionalId,
+          "Novo Agendamento! 📅",
+          `${guestName} agendou ${service[0].name}`,
+          "appointment",
+          { appointmentId: appointment.id },
+        );
       }
 
-      await createNotification(
-        service.professionalId,
-        "Novo Agendamento",
-        `${client?.name} agendou ${service.name} para ${appointmentDateFormatted}`,
-        "new_appointment",
-        {
-          appointmentId: newAppointment.id,
-          serviceId: service.id,
-          clientId: req.userId,
-        },
-      );
-
-      res.json(newAppointment);
+      res.json({ appointment, tempClientToken });
     } catch (error) {
       console.error("Erro ao criar agendamento:", error);
       res.status(500).json({ error: "Erro ao criar agendamento" });
     }
   },
 );
+
 
 app.post(
   "/api/appointments/:id/mark-paid",
@@ -599,7 +555,7 @@ app.post(
   async (req: AuthRequest, res) => {
     try {
       const { serviceId, appointmentDate, phone, guestName, guestEmail } = req.body;
-      
+
       const authHeader = req.headers['authorization'];
       const token = authHeader && authHeader.split(' ')[1];
       let userId: number | null = null;
@@ -630,18 +586,18 @@ app.post(
           .from(users)
           .where(eq(users.id, userId))
           .limit(1);
-        
+
         if (!client) {
           return res.status(404).json({ error: "Cliente não encontrado" });
         }
-        
+
         clientName = client.name;
         clientEmail = client.email;
       } else {
         if (!guestName || !guestEmail || !phone) {
           return res.status(400).json({ error: "Dados do cliente são obrigatórios" });
         }
-        
+
         clientName = guestName;
         clientEmail = guestEmail;
       }
@@ -761,7 +717,7 @@ app.post(
           .from(users)
           .where(eq(users.id, appointment.clientId))
           .limit(1);
-        
+
         if (client) {
           clientName = client.name;
           clientPhone = client.phone;

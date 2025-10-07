@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { StyleSheet, FlatList, ActivityIndicator, View, RefreshControl, Animated, TextInput, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
@@ -50,7 +49,7 @@ export default function HomeScreen() {
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
-    
+
     if (text.trim() === '') {
       setFilteredServices(services);
       return;
@@ -62,7 +61,7 @@ export default function HomeScreen() {
       service.description?.toLowerCase().includes(query) ||
       service.professionalName.toLowerCase().includes(query)
     );
-    
+
     setFilteredServices(filtered);
   };
 
@@ -128,7 +127,7 @@ export default function HomeScreen() {
               <Ionicons name="time" size={14} color={theme.colors.primary} />
               <ThemedText style={styles.infoChipText}>{item.duration} min</ThemedText>
             </View>
-            
+
             <View style={styles.priceContainer}>
               <ThemedText style={styles.priceLabel}>a partir de</ThemedText>
               <ThemedText style={styles.priceValue}>
@@ -182,19 +181,7 @@ export default function HomeScreen() {
                 Escolha o melhor para você
               </ThemedText>
             </View>
-            
-            {!user && (
-              <TouchableOpacity 
-                style={styles.professionalLoginButton}
-                onPress={() => router.push('/(auth)/login')}
-              >
-                <Ionicons name="briefcase" size={16} color="#fff" />
-                <ThemedText style={styles.professionalLoginText}>
-                  Área Profissional
-                </ThemedText>
-              </TouchableOpacity>
-            )}
-            
+
             <View style={styles.statsContainer}>
               <View style={styles.statCard}>
                 <ThemedText style={styles.statValue}>{services.length}</ThemedText>

@@ -54,6 +54,7 @@ export const appointments = pgTable('appointments', {
   guestName: text('guest_name'),
   guestEmail: text('guest_email'),
   guestPhone: varchar('guest_phone', { length: 20 }),
+  tempClientToken: text('temp_client_token'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 

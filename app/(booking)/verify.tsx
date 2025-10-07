@@ -14,12 +14,12 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function VerifyScreen() {
   const { serviceId, appointmentDate } = useLocalSearchParams();
-  const { user, token } = useAuth();
+  const { user, token, setTempToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
   const [appointmentId, setAppointmentId] = useState<number | null>(null);
-  
+
   const [guestName, setGuestName] = useState('');
   const [guestEmail, setGuestEmail] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
@@ -32,13 +32,13 @@ export default function VerifyScreen() {
         Alert.alert('Campos obrigatórios', 'Por favor, preencha todos os seus dados para continuar.');
         return;
       }
-      
+
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(guestEmail)) {
         Alert.alert('Email inválido', 'Por favor, digite um email válido.');
         return;
       }
-      
+
       const phoneRegex = /^\d{10,11}$/;
       const cleanPhone = guestPhone.replace(/\D/g, '');
       if (!phoneRegex.test(cleanPhone)) {
@@ -64,7 +64,7 @@ export default function VerifyScreen() {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
@@ -105,7 +105,7 @@ export default function VerifyScreen() {
       const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
-      
+
       if (token) {
         headers['Authorization'] = `Bearer ${token}`;
       }
@@ -122,6 +122,13 @@ export default function VerifyScreen() {
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.error || 'Erro ao verificar o código');
+      }
+
+      const data = await response.json();
+
+      // Salvar token temporário se for um convidado
+      if (data.tempClientToken) {
+        await setTempToken(data.tempClientToken);
       }
 
       Alert.alert(
