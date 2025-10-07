@@ -424,32 +424,16 @@ app.post(
       const { serviceId, appointmentDate, guestName, guestEmail, guestPhone } =
         req.body;
 
-      // Criar um token único para o cliente temporário
-      const tempClientToken = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-
-      // Criar usuário temporário
-      const [tempUser] = await db
-        .insert(users)
-        .values({
-          name: guestName,
-          email: guestEmail,
-          phone: guestPhone,
-          password: await hashPassword(Math.random().toString(36)),
-          role: 'temp_client',
-        })
-        .returning();
-
       const [appointment] = await db
         .insert(appointments)
         .values({
-          clientId: tempUser.id,
+          clientId: req.userId,
           serviceId: Number(serviceId),
-          professionalId: 1, // This will be updated to the actual professional ID from service
+          professionalId: 1,
           appointmentDate: new Date(appointmentDate),
           guestName,
           guestEmail,
           guestPhone,
-          tempClientToken,
           status: "confirmed",
           paymentStatus: "paid",
         })
@@ -465,13 +449,13 @@ app.post(
         await createNotification(
           service[0].professionalId,
           "Novo Agendamento! 📅",
-          `${guestName} agendou ${service[0].name}`,
+          `${guestName || 'Cliente'} agendou ${service[0].name}`,
           "appointment",
           { appointmentId: appointment.id },
         );
       }
 
-      res.json({ appointment, tempClientToken });
+      res.json({ appointment });
     } catch (error) {
       console.error("Erro ao criar agendamento:", error);
       res.status(500).json({ error: "Erro ao criar agendamento" });
@@ -700,22 +684,46 @@ app.post(
           .json({ error: "Código de verificação inválido" });
       }
 
+      let clientId = appointment.clientId;
+      let tempClientToken: string | null = null;
+
+      // Se não tiver clientId, criar usuário temporário
+      if (!clientId && appointment.guestName && appointment.guestEmail && appointment.guestPhone) {
+        tempClientToken = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
+
+        const [tempUser] = await db
+          .insert(users)
+          .values({
+            name: appointment.guestName,
+            email: appointment.guestEmail,
+            phone: appointment.guestPhone,
+            password: await hashPassword(Math.random().toString(36)),
+            role: 'temp_client',
+          })
+          .returning();
+
+        clientId = tempUser.id;
+      }
+
+      // Atualizar o agendamento
       await db
         .update(appointments)
         .set({
           status: "confirmed",
           stripePaymentIntentId: null,
+          clientId: clientId,
+          tempClientToken: tempClientToken,
         })
         .where(eq(appointments.id, appointmentId));
 
       let clientName: string;
       let clientPhone: string;
 
-      if (appointment.clientId) {
+      if (clientId) {
         const [client] = await db
           .select()
           .from(users)
-          .where(eq(users.id, appointment.clientId))
+          .where(eq(users.id, clientId))
           .limit(1);
 
         if (client) {
@@ -763,8 +771,26 @@ app.post(
         }
       }
 
+      // Enviar notificação ao profissional
+      const [service] = await db
+        .select()
+        .from(services)
+        .where(eq(services.id, appointment.serviceId))
+        .limit(1);
+
+      if (service) {
+        await createNotification(
+          service.professionalId,
+          "Novo Agendamento Confirmado! 📅",
+          `${clientName} confirmou agendamento de ${service.name}`,
+          "appointment",
+          { appointmentId: appointment.id },
+        );
+      }
+
       res.json({
         message: "Código verificado com sucesso e agendamento confirmado",
+        tempClientToken: tempClientToken,
       });
     } catch (error) {
       console.error("Erro ao verificar código:", error);

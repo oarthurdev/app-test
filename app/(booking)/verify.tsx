@@ -127,7 +127,7 @@ export default function VerifyScreen() {
       const data = await response.json();
 
       // Salvar token temporário se for um convidado
-      if (data.tempClientToken) {
+      if (data.tempClientToken && !user) {
         await setTempToken(data.tempClientToken);
       }
 
@@ -138,7 +138,7 @@ export default function VerifyScreen() {
           {
             text: 'OK',
             onPress: () => {
-              router.replace('/(tabs)');
+              router.replace('/(tabs)/appointments');
             },
           },
         ]
