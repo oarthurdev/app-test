@@ -1,24 +1,30 @@
-import { StyleSheet, View, Alert, ScrollView, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
-import { useAuth } from '@/contexts/AuthContext';
-import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import { theme } from '@/constants/Theme';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Ionicons } from '@expo/vector-icons';
-import { useNotifications } from '@/contexts/NotificationContext';
-import { useEffect } from 'react';
+import {
+  StyleSheet,
+  View,
+  Alert,
+  ScrollView,
+  TouchableOpacity,
+} from "react-native";
+import { router } from "expo-router";
+import { ThemedText } from "@/components/ThemedText";
+import { ThemedView } from "@/components/ThemedView";
+import { useAuth } from "@/contexts/AuthContext";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
+import { theme } from "@/constants/Theme";
+import { LinearGradient } from "expo-linear-gradient";
+import { Ionicons } from "@expo/vector-icons";
+import { useNotifications } from "@/contexts/NotificationContext";
+import { useEffect } from "react";
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+const API_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function ProfileScreen() {
   const { user, logout, token } = useAuth();
   const { registerForPushNotifications } = useNotifications();
 
   useEffect(() => {
-    if (user?.role === 'professional') {
+    if (user?.role === "professional") {
       setupPushNotifications();
     }
   }, [user]);
@@ -37,60 +43,89 @@ export default function ProfileScreen() {
               </View>
             </View>
             <ThemedText style={styles.userName}>Menu</ThemedText>
-            <ThemedText style={styles.userRole}>Navegando como Cliente</ThemedText>
+            <ThemedText style={styles.userRole}>
+              Navegando como Cliente
+            </ThemedText>
           </View>
         </LinearGradient>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Área Profissional</ThemedText>
-            
+            <ThemedText style={styles.sectionTitle}>
+              Área Profissional
+            </ThemedText>
+
             <Card style={styles.menuCard}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => router.push('/(auth)/login')}
+                onPress={() => router.push("/(auth)/login")}
               >
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="briefcase" size={24} color={theme.colors.primary} />
+                  <Ionicons
+                    name="briefcase"
+                    size={24}
+                    color={theme.colors.primary}
+                  />
                 </View>
                 <View style={styles.menuContent}>
-                  <ThemedText style={styles.menuTitle}>Login Profissional</ThemedText>
+                  <ThemedText style={styles.menuTitle}>
+                    Login Profissional
+                  </ThemedText>
                   <ThemedText style={styles.menuDescription}>
                     Acesse sua área para gerenciar serviços e agendamentos
                   </ThemedText>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={24}
+                  color={theme.colors.text.tertiary}
+                />
               </TouchableOpacity>
             </Card>
 
             <Card style={styles.menuCard}>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.menuItem}
-                onPress={() => router.push('/(auth)/register')}
+                onPress={() => router.push("/(auth)/register")}
               >
                 <View style={styles.menuIconContainer}>
-                  <Ionicons name="person-add" size={24} color={theme.colors.primary} />
+                  <Ionicons
+                    name="person-add"
+                    size={24}
+                    color={theme.colors.primary}
+                  />
                 </View>
                 <View style={styles.menuContent}>
-                  <ThemedText style={styles.menuTitle}>Cadastro Profissional</ThemedText>
+                  <ThemedText style={styles.menuTitle}>
+                    Cadastro Profissional
+                  </ThemedText>
                   <ThemedText style={styles.menuDescription}>
                     Crie sua conta e comece a oferecer seus serviços
                   </ThemedText>
                 </View>
-                <Ionicons name="chevron-forward" size={24} color={theme.colors.text.tertiary} />
+                <Ionicons
+                  name="chevron-forward"
+                  size={24}
+                  color={theme.colors.text.tertiary}
+                />
               </TouchableOpacity>
             </Card>
           </View>
 
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>Informações</ThemedText>
-            
+
             <Card style={styles.infoTextCard}>
-              <Ionicons name="information-circle" size={24} color={theme.colors.primary} style={{marginBottom: theme.spacing.sm}} />
+              <Ionicons
+                name="information-circle"
+                size={24}
+                color={theme.colors.primary}
+                style={{ marginBottom: theme.spacing.sm }}
+              />
               <ThemedText style={styles.infoTextTitle}>Como cliente</ThemedText>
               <ThemedText style={styles.infoTextDescription}>
-                Você pode navegar e agendar serviços sem precisar criar uma conta. 
-                Basta preencher seus dados no momento do agendamento!
+                Você pode navegar e agendar serviços sem precisar criar uma
+                conta. Basta preencher seus dados no momento do agendamento!
               </ThemedText>
             </Card>
           </View>
@@ -109,44 +144,40 @@ export default function ProfileScreen() {
       if (pushToken && token) {
         try {
           await fetch(`${API_URL}/api/auth/push-token`, {
-            method: 'POST',
+            method: "POST",
             headers: {
-              'Content-Type': 'application/json',
+              "Content-Type": "application/json",
               Authorization: `Bearer ${token}`,
             },
             body: JSON.stringify({ pushToken }),
           });
-          console.log('Push token registered successfully');
+          console.log("Push token registered successfully");
         } catch (error) {
-          console.error('Error registering push token:', error);
+          console.error("Error registering push token:", error);
         }
       } else {
-        console.log('Push notifications not available or not permitted');
+        console.log("Push notifications not available or not permitted");
       }
     } catch (error) {
-      console.error('Error setting up push notifications:', error);
+      console.error("Error setting up push notifications:", error);
     }
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      'Sair',
-      'Deseja realmente sair da sua conta?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            await logout();
-            router.replace('/(auth)/login');
-          },
+    Alert.alert("Sair", "Deseja realmente sair da sua conta?", [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Sair",
+        style: "destructive",
+        onPress: async () => {
+          await logout();
+          router.replace("/(tabs)");
         },
-      ]
-    );
+      },
+    ]);
   };
 
-  const isProfessional = user?.role === 'professional';
+  const isProfessional = user?.role === "professional";
 
   return (
     <ThemedView style={styles.container}>
@@ -169,19 +200,25 @@ export default function ProfileScreen() {
           </View>
           <ThemedText style={styles.userName}>{user?.name}</ThemedText>
           <ThemedText style={styles.userRole}>
-            {isProfessional ? '⭐ Profissional' : '👤 Cliente'}
+            {isProfessional ? "⭐ Profissional" : "👤 Cliente"}
           </ThemedText>
         </View>
       </LinearGradient>
 
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.section}>
-          <ThemedText style={styles.sectionTitle}>Informações Pessoais</ThemedText>
+          <ThemedText style={styles.sectionTitle}>
+            Informações Pessoais
+          </ThemedText>
 
           <Card style={styles.infoCard}>
             <View style={styles.infoRow}>
               <View style={styles.iconContainer}>
-                <Ionicons name="mail-outline" size={24} color={theme.colors.primary} />
+                <Ionicons
+                  name="mail-outline"
+                  size={24}
+                  color={theme.colors.primary}
+                />
               </View>
               <View style={styles.infoContent}>
                 <ThemedText style={styles.infoLabel}>E-mail</ThemedText>
@@ -193,7 +230,11 @@ export default function ProfileScreen() {
           <Card style={styles.infoCard}>
             <View style={styles.infoRow}>
               <View style={styles.iconContainer}>
-                <Ionicons name="call-outline" size={24} color={theme.colors.primary} />
+                <Ionicons
+                  name="call-outline"
+                  size={24}
+                  color={theme.colors.primary}
+                />
               </View>
               <View style={styles.infoContent}>
                 <ThemedText style={styles.infoLabel}>Telefone</ThemedText>
@@ -214,7 +255,7 @@ export default function ProfileScreen() {
               <View style={styles.infoContent}>
                 <ThemedText style={styles.infoLabel}>Tipo de Conta</ThemedText>
                 <ThemedText style={styles.infoValue}>
-                  {isProfessional ? 'Conta Profissional' : 'Conta Cliente'}
+                  {isProfessional ? "Conta Profissional" : "Conta Cliente"}
                 </ThemedText>
               </View>
             </View>
@@ -223,14 +264,23 @@ export default function ProfileScreen() {
 
         {isProfessional && (
           <View style={styles.section}>
-            <ThemedText style={styles.sectionTitle}>Recursos Profissionais</ThemedText>
+            <ThemedText style={styles.sectionTitle}>
+              Recursos Profissionais
+            </ThemedText>
             <Card style={styles.featureCard}>
               <View style={styles.featureContent}>
-                <Ionicons name="checkmark-circle" size={24} color={theme.colors.success} />
+                <Ionicons
+                  name="checkmark-circle"
+                  size={24}
+                  color={theme.colors.success}
+                />
                 <View style={styles.featureText}>
-                  <ThemedText style={styles.featureTitle}>Gerenciar Serviços</ThemedText>
+                  <ThemedText style={styles.featureTitle}>
+                    Gerenciar Serviços
+                  </ThemedText>
                   <ThemedText style={styles.featureDescription}>
-                    Acesse o painel Admin para cadastrar e gerenciar seus serviços
+                    Acesse o painel Admin para cadastrar e gerenciar seus
+                    serviços
                   </ThemedText>
                 </View>
               </View>
@@ -251,9 +301,7 @@ export default function ProfileScreen() {
         </View>
 
         <View style={styles.footer}>
-          <ThemedText style={styles.footerText}>
-            Versão 1.0.0
-          </ThemedText>
+          <ThemedText style={styles.footerText}>Versão 1.0.0</ThemedText>
         </View>
       </ScrollView>
     </ThemedView>
@@ -270,22 +318,22 @@ const styles = StyleSheet.create({
     paddingBottom: theme.spacing.xxl,
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: theme.spacing.xl,
   },
   avatarContainer: {
-    position: 'relative',
+    position: "relative",
     marginBottom: theme.spacing.md,
   },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 4,
-    borderColor: 'rgba(255, 255, 255, 0.3)',
+    borderColor: "rgba(255, 255, 255, 0.3)",
   },
   avatarText: {
     fontSize: 40,
@@ -293,15 +341,15 @@ const styles = StyleSheet.create({
     color: theme.colors.text.inverse,
   },
   badgeContainer: {
-    position: 'absolute',
+    position: "absolute",
     right: 0,
     bottom: 0,
     backgroundColor: theme.colors.text.inverse,
     width: 32,
     height: 32,
     borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     borderWidth: 3,
     borderColor: theme.colors.primary,
   },
@@ -313,7 +361,7 @@ const styles = StyleSheet.create({
   },
   userRole: {
     fontSize: theme.fontSize.md,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: "rgba(255, 255, 255, 0.9)",
   },
   content: {
     flex: 1,
@@ -333,8 +381,8 @@ const styles = StyleSheet.create({
     padding: theme.spacing.lg,
   },
   infoRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    flexDirection: "row",
+    alignItems: "flex-start",
     marginBottom: theme.spacing.lg,
   },
   iconContainer: {
@@ -342,8 +390,8 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: `${theme.colors.primary}15`,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: theme.spacing.md,
   },
   infoContent: {
@@ -364,8 +412,8 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.md,
   },
   featureContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: theme.spacing.md,
   },
   featureText: {
@@ -388,7 +436,7 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   footer: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: theme.spacing.xl,
   },
   footerText: {
@@ -398,11 +446,11 @@ const styles = StyleSheet.create({
   menuCard: {
     marginBottom: theme.spacing.md,
     padding: 0,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: theme.spacing.lg,
   },
   menuIconContainer: {
@@ -410,8 +458,8 @@ const styles = StyleSheet.create({
     height: 48,
     borderRadius: 24,
     backgroundColor: `${theme.colors.primary}15`,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: theme.spacing.md,
   },
   menuContent: {
