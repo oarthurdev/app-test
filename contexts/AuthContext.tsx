@@ -113,13 +113,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = async () => {
     try {
-      await Promise.all([
-        AsyncStorage.removeItem('token'),
-        AsyncStorage.removeItem(GUEST_CLIENT_ID_KEY) // Use the constant here
-      ]);
+      // Remove apenas o token, mantém o guestClientId
+      await AsyncStorage.removeItem('token');
       setToken(null);
       setUser(null);
-      setGuestClientId(null);
+      // NÃO remove o guestClientId para preservar agendamentos feitos como cliente
       console.log('Logout realizado com sucesso');
     } catch (error) {
       console.error('Erro ao fazer logout:', error);
