@@ -408,6 +408,43 @@ app.post(
           "appointment",
           { appointmentId: appointment.id },
         );
+
+        // Enviar WhatsApp para o profissional
+        const [professional] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, service[0].professionalId))
+          .limit(1);
+
+        if (professional?.phone && process.env.ZAPI_INSTANCE_ID) {
+          try {
+            const appointmentDateFormatted = new Date(appointmentDate).toLocaleString(
+              "pt-BR",
+              {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              },
+            );
+
+            const message =
+              `🎉 *Novo Agendamento Recebido!*\n\n` +
+              `📅 *Data:* ${appointmentDateFormatted}\n` +
+              `💇 *Serviço:* ${service[0].name}\n` +
+              `👤 *Cliente:* ${guestName || 'Cliente'}\n` +
+              `📞 *Telefone:* ${guestPhone || 'Não informado'}\n` +
+              `📧 *Email:* ${guestEmail || 'Não informado'}\n` +
+              `💰 *Valor:* R$ ${parseFloat(service[0].price).toFixed(2)}\n\n` +
+              `Confira os detalhes no aplicativo! 📱`;
+
+            await sendWhatsAppMessage(professional.phone, message);
+          } catch (whatsappError) {
+            console.error("Erro ao enviar WhatsApp ao profissional:", whatsappError);
+            // Não falha a requisição se o WhatsApp falhar
+          }
+        }
       }
 
       res.json({ appointment });
@@ -740,6 +777,42 @@ app.post(
           "appointment",
           { appointmentId: appointment.id },
         );
+
+        // Enviar WhatsApp para o profissional
+        const [professional] = await db
+          .select()
+          .from(users)
+          .where(eq(users.id, service.professionalId))
+          .limit(1);
+
+        if (professional?.phone && process.env.ZAPI_INSTANCE_ID) {
+          try {
+            const appointmentDateFormatted = appointment.appointmentDate.toLocaleString(
+              "pt-BR",
+              {
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+              },
+            );
+
+            const message =
+              `✅ *Agendamento Confirmado!*\n\n` +
+              `📅 *Data:* ${appointmentDateFormatted}\n` +
+              `💇 *Serviço:* ${service.name}\n` +
+              `👤 *Cliente:* ${clientName}\n` +
+              `📞 *Telefone:* ${clientPhone || 'Não informado'}\n` +
+              `💰 *Valor:* R$ ${parseFloat(service.price).toFixed(2)}\n\n` +
+              `O cliente confirmou o agendamento! 🎉`;
+
+            await sendWhatsAppMessage(professional.phone, message);
+          } catch (whatsappError) {
+            console.error("Erro ao enviar WhatsApp ao profissional:", whatsappError);
+            // Não falha a requisição se o WhatsApp falhar
+          }
+        }
       }
 
       res.json({
