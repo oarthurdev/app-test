@@ -14,7 +14,7 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
 
 export default function VerifyScreen() {
   const { serviceId, appointmentDate } = useLocalSearchParams();
-  const { user, token, setGuestId } = useAuth();
+  const { user, token, setGuestId, guestClientId } = useAuth();
   const [loading, setLoading] = useState(false);
   const [codeSent, setCodeSent] = useState(false);
   const [verificationCode, setVerificationCode] = useState('');
@@ -59,6 +59,7 @@ export default function VerifyScreen() {
         phone: guestPhone.replace(/\D/g, ''),
         guestName: guestName,
         guestEmail: guestEmail,
+        guestClientId: guestClientId || undefined, // Envia o UUID existente se houver
       };
 
       const headers: Record<string, string> = {
@@ -83,8 +84,8 @@ export default function VerifyScreen() {
       const data = await response.json();
       setAppointmentId(data.appointmentId);
       
-      // Salvar guestClientId se for um cliente não autenticado
-      if (data.guestClientId && !user) {
+      // Salvar guestClientId se for um cliente não autenticado e não tiver um ID já salvo
+      if (data.guestClientId && !user && !guestClientId) {
         await setGuestId(data.guestClientId);
       }
       

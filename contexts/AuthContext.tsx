@@ -22,6 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+const GUEST_CLIENT_ID_KEY = 'guestClientId'; // Define a constant for the key
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -37,7 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const [storedToken, storedGuestId] = await Promise.all([
         AsyncStorage.getItem('token'),
-        AsyncStorage.getItem('guestClientId')
+        AsyncStorage.getItem(GUEST_CLIENT_ID_KEY) // Use the constant here
       ]);
 
       if (storedToken) {
@@ -69,9 +70,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setGuestId = async (id: string) => {
     try {
-      await AsyncStorage.setItem('guestClientId', id);
-      setGuestClientId(id);
-      console.log('Guest Client ID salvo com sucesso:', id);
+      // Só atualiza se não existir um ID já salvo
+      const existingId = await AsyncStorage.getItem(GUEST_CLIENT_ID_KEY);
+      if (!existingId) {
+        setGuestClientId(id);
+        await AsyncStorage.setItem(GUEST_CLIENT_ID_KEY, id);
+        console.log('Guest Client ID salvo com sucesso:', id);
+      } else {
+        // Se já existe, usa o existente
+        setGuestClientId(existingId);
+        console.log('Guest Client ID existente utilizado:', existingId);
+      }
     } catch (error) {
       console.error('Erro ao salvar guestClientId:', error);
       throw error;
@@ -106,7 +115,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await Promise.all([
         AsyncStorage.removeItem('token'),
-        AsyncStorage.removeItem('guestClientId')
+        AsyncStorage.removeItem(GUEST_CLIENT_ID_KEY) // Use the constant here
       ]);
       setToken(null);
       setUser(null);

@@ -497,8 +497,18 @@ app.post(
         100000 + Math.random() * 900000,
       ).toString();
 
-      const { v4: uuidv4 } = await import('uuid');
-      const guestClientId = userId ? null : uuidv4();
+      // Reutilizar guestClientId existente ou criar novo apenas se necessário
+      let guestClientId = null;
+      if (!userId) {
+        if (req.body.guestClientId) {
+          // Usa o UUID existente do dispositivo
+          guestClientId = req.body.guestClientId;
+        } else {
+          // Cria um novo UUID apenas se não existir
+          const { v4: uuidv4 } = await import('uuid');
+          guestClientId = uuidv4();
+        }
+      }
 
       const appointmentData: any = {
         serviceId,
