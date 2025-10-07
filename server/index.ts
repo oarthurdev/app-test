@@ -688,7 +688,12 @@ app.post(
       let tempClientToken: string | null = null;
 
       // Se não tiver clientId, criar usuário temporário
-      if (!clientId && appointment.guestName && appointment.guestEmail && appointment.guestPhone) {
+      if (!clientId) {
+        // Verificar se temos os dados do convidado
+        if (!appointment.guestName || !appointment.guestEmail || !appointment.guestPhone) {
+          return res.status(400).json({ error: "Dados do cliente incompletos" });
+        }
+
         tempClientToken = `temp_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
 
         const [tempUser] = await db
