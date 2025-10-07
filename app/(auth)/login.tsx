@@ -108,38 +108,6 @@ export default function LoginScreen() {
                 size="lg"
                 style={styles.loginButton}
               />
-
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <ThemedText style={styles.dividerText}>ou</ThemedText>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <TouchableOpacity 
-                style={styles.registerLink}
-                onPress={() => router.push('/(auth)/register')}
-              >
-                <ThemedText style={styles.registerText}>
-                  Não tem uma conta? <ThemedText style={styles.registerTextBold}>Cadastre-se</ThemedText>
-                </ThemedText>
-              </TouchableOpacity>
-            </View>
-
-            <View style={styles.demoCard}>
-              <View style={styles.demoHeader}>
-                <Ionicons name="information-circle" size={20} color={theme.colors.info} />
-                <ThemedText style={styles.demoTitle}>Conta Demo</ThemedText>
-              </View>
-              <View style={styles.demoContent}>
-                <View style={styles.demoRow}>
-                  <Ionicons name="mail" size={14} color={theme.colors.text.tertiary} />
-                  <ThemedText style={styles.demoText}>profissional@teste.com</ThemedText>
-                </View>
-                <View style={styles.demoRow}>
-                  <Ionicons name="key" size={14} color={theme.colors.text.tertiary} />
-                  <ThemedText style={styles.demoText}>senha123</ThemedText>
-                </View>
-              </View>
             </View>
           </View>
         </ScrollView>
@@ -245,49 +213,5 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.medium,
-  },
-  registerLink: {
-    alignItems: 'center',
-    paddingVertical: theme.spacing.md,
-  },
-  registerText: {
-    fontSize: theme.fontSize.md,
-    color: theme.colors.text.secondary,
-  },
-  registerTextBold: {
-    color: theme.colors.primary,
-    fontWeight: theme.fontWeight.bold,
-  },
-  demoCard: {
-    marginTop: theme.spacing.xl,
-    backgroundColor: theme.colors.background.secondary,
-    padding: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border.light,
-  },
-  demoHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-    marginBottom: theme.spacing.md,
-  },
-  demoTitle: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.text.primary,
-  },
-  demoContent: {
-    gap: theme.spacing.sm,
-  },
-  demoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: theme.spacing.sm,
-  },
-  demoText: {
-    fontSize: theme.fontSize.sm,
-    color: theme.colors.text.secondary,
-    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
-  },
+  }
 });

@@ -14,7 +14,6 @@ interface AuthContextType {
   token: string | null;
   guestClientId: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (name: string, email: string, phone: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setGuestId: (id: string) => Promise<void>;
   loading: boolean;
@@ -103,30 +102,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, phone: string, password: string) => {
-    try {
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name, email, phone, password }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro ao registrar');
-      }
-
-      const data = await response.json();
-      setUser(data.user);
-      setToken(data.token);
-      await AsyncStorage.setItem('token', data.token);
-    } catch (error) {
-      throw error;
-    }
-  };
-
   const logout = async () => {
     try {
       await Promise.all([
@@ -143,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, guestClientId, loading, login, register, logout, setGuestId }}>
+    <AuthContext.Provider value={{ user, token, guestClientId, loading, login, logout, setGuestId }}>
       {children}
     </AuthContext.Provider>
   );

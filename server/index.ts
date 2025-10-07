@@ -69,51 +69,6 @@ async function sendWhatsAppMessage(phone: string, message: string) {
   }
 }
 
-app.post("/api/auth/register", async (req, res) => {
-  try {
-    const { name, email, phone, password } = req.body;
-
-    const existingUser = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, email))
-      .limit(1);
-
-    if (existingUser.length > 0) {
-      return res.status(400).json({ error: "Email já cadastrado" });
-    }
-
-    const hashedPassword = await hashPassword(password);
-
-    const [newUser] = await db
-      .insert(users)
-      .values({
-        name,
-        email,
-        phone,
-        password: hashedPassword,
-        role: "professional", // Default role
-      })
-      .returning();
-
-    const token = generateToken(newUser.id, newUser.role);
-
-    res.json({
-      token,
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        phone: newUser.phone,
-        role: newUser.role,
-      },
-    });
-  } catch (error) {
-    console.error("Erro no registro:", error);
-    res.status(500).json({ error: "Erro ao registrar usuário" });
-  }
-});
-
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;

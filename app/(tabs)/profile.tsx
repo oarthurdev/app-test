@@ -82,34 +82,6 @@ export default function ProfileScreen() {
                 />
               </TouchableOpacity>
             </Card>
-
-            <Card style={styles.menuCard}>
-              <TouchableOpacity
-                style={styles.menuItem}
-                onPress={() => router.push("/(auth)/register")}
-              >
-                <View style={styles.menuIconContainer}>
-                  <Ionicons
-                    name="person-add"
-                    size={24}
-                    color={theme.colors.primary}
-                  />
-                </View>
-                <View style={styles.menuContent}>
-                  <ThemedText style={styles.menuTitle}>
-                    Cadastro Profissional
-                  </ThemedText>
-                  <ThemedText style={styles.menuDescription}>
-                    Crie sua conta e comece a oferecer seus serviços
-                  </ThemedText>
-                </View>
-                <Ionicons
-                  name="chevron-forward"
-                  size={24}
-                  color={theme.colors.text.tertiary}
-                />
-              </TouchableOpacity>
-            </Card>
           </View>
 
           <View style={styles.section}>
