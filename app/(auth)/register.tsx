@@ -88,7 +88,7 @@ export default function RegisterScreen() {
 
             <Input
               label="Telefone"
-              placeholder="+55 11 99999-9999"
+              placeholder="11 99999-9999"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"

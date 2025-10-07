@@ -45,6 +45,9 @@ export default {
     extra: {
       router: {
         origin: false
+      },
+      eas: {
+        projectId: "643c29e9-3250-4a89-a30c-180632ca46ad"
       }
     }
   }

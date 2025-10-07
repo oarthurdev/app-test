@@ -42,6 +42,25 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const [unreadCount, setUnreadCount] = useState(0);
   const { token, user } = useAuth();
 
+  const loadNotifications = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(`${API_URL}/api/notifications`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data);
+      }
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+    }
+  }, [token]);
+
   useEffect(() => {
     if (user?.role === 'professional' && token) {
       loadNotifications();
@@ -78,7 +97,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
       // Only try to get Expo push token if permissions are granted
       try {
-        const token = (await Notifications.getExpoPushTokenAsync()).data;
+        const token = (await Notifications.getExpoPushTokenAsync({
+          'projectId': '643c29e9-3250-4a89-a30c-180632ca46ad',
+        })).data;
         
         if (Platform.OS === 'android') {
           await Notifications.setNotificationChannelAsync('default', {
@@ -99,25 +120,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       return null;
     }
   };
-
-  const loadNotifications = useCallback(async () => {
-    if (!token) return;
-
-    try {
-      const response = await fetch(`${API_URL}/api/notifications`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data);
-      }
-    } catch (error) {
-      console.error('Error loading notifications:', error);
-    }
-  }, [token]);
 
   const markAsRead = useCallback(async (notificationId: number) => {
     if (!token) return;

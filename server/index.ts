@@ -92,7 +92,7 @@ app.post("/api/auth/register", async (req, res) => {
         email,
         phone,
         password: hashedPassword,
-        role: "client",
+        role: "professional", // Default role
       })
       .returning();
 

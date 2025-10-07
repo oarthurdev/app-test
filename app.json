@@ -7,6 +7,7 @@
     "icon": "./assets/images/icon.png",
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
+    "projectId": "643c29e9-3250-4a89-a30c-180632ca46ad",
     "newArchEnabled": true,
     "platforms": [
       "ios",
@@ -51,7 +52,7 @@
         "origin": false
       },
       "eas": {
-        "projectId": "expo-on-replit"
+        "projectId": "643c29e9-3250-4a89-a30c-180632ca46ad"
       }
     }
   }
