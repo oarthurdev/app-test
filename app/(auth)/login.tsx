@@ -56,20 +56,20 @@ export default function LoginScreen() {
                 colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
                 style={styles.logoGradient}
               >
-                <Ionicons name="business" size={48} color="#fff" />
+                <Ionicons name="briefcase" size={48} color="#fff" />
               </LinearGradient>
             </View>
             <ThemedText style={styles.appName}>BookPro</ThemedText>
             <ThemedText style={styles.tagline}>
-              Sistema de Agendamentos para seu Negócio
+              Área do Proprietário
             </ThemedText>
           </View>
 
           <View style={styles.formContainer}>
             <View style={styles.welcomeSection}>
-              <ThemedText style={styles.welcomeTitle}>Bem-vindo de volta</ThemedText>
+              <ThemedText style={styles.welcomeTitle}>Área do Proprietário</ThemedText>
               <ThemedText style={styles.welcomeSubtitle}>
-                Faça login para continuar
+                Faça login para gerenciar seu estabelecimento
               </ThemedText>
             </View>
 

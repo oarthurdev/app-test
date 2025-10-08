@@ -60,7 +60,7 @@ router.post('/api/tenants/register', async (req, res) => {
         email: ownerEmail,
         phone: ownerPhone,
         password: hashedPassword,
-        role: 'owner',
+        role: 'owner', // Proprietário do estabelecimento
       })
       .returning();
 
