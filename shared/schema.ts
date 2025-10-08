@@ -1,4 +1,4 @@
-import { pgTable, serial, text, timestamp, integer, boolean, decimal, varchar, time } from 'drizzle-orm/pg-core';
+import { pgTable, serial, text, timestamp, integer, boolean, decimal, varchar, time, unique, index } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
 // Tabela de empresas/estabelecimentos
@@ -24,7 +24,12 @@ export const users = pgTable('users', {
   role: text('role').notNull().default('client'), // 'owner', 'professional' ou 'client'
   pushToken: text('push_token'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // Garantir que email seja único dentro do tenant (não globalmente)
+  emailTenantUnique: unique('email_tenant_unique').on(table.email, table.tenantId),
+  // Índice para consultas frequentes por tenant
+  tenantIdIdx: index('users_tenant_id_idx').on(table.tenantId),
+}));
 
 export const notifications = pgTable('notifications', {
   id: serial('id').primaryKey(),
@@ -35,7 +40,12 @@ export const notifications = pgTable('notifications', {
   read: boolean('read').notNull().default(false),
   data: text('data'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // Índice para consultas de notificações por usuário
+  userIdIdx: index('notifications_user_id_idx').on(table.userId),
+  // Índice para consultas de notificações não lidas
+  userReadIdx: index('notifications_user_read_idx').on(table.userId, table.read),
+}));
 
 export const services = pgTable('services', {
   id: serial('id').primaryKey(),
@@ -46,7 +56,12 @@ export const services = pgTable('services', {
   price: decimal('price', { precision: 10, scale: 2 }).notNull(),
   duration: integer('duration').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // Índice composto para consultas por tenant
+  tenantIdIdx: index('services_tenant_id_idx').on(table.tenantId),
+  // Índice para consultas por profissional dentro do tenant
+  tenantProfessionalIdx: index('services_tenant_professional_idx').on(table.tenantId, table.professionalId),
+}));
 
 export const businessHours = pgTable('business_hours', {
   id: serial('id').primaryKey(),
@@ -56,7 +71,12 @@ export const businessHours = pgTable('business_hours', {
   startTime: time('start_time').notNull(),
   endTime: time('end_time').notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // Índice composto para consultas de horários por tenant e profissional
+  tenantProfessionalIdx: index('business_hours_tenant_professional_idx').on(table.tenantId, table.professionalId),
+  // Garantir que não haja horários duplicados para o mesmo dia/profissional
+  uniqueDayProfessional: unique('unique_day_professional').on(table.tenantId, table.professionalId, table.dayOfWeek, table.startTime, table.endTime),
+}));
 
 export const appointments = pgTable('appointments', {
   id: serial('id').primaryKey(),
@@ -73,7 +93,16 @@ export const appointments = pgTable('appointments', {
   guestPhone: varchar('guest_phone', { length: 20 }),
   guestClientId: text('guest_client_id'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-});
+}, (table) => ({
+  // Índice para consultas por tenant
+  tenantIdIdx: index('appointments_tenant_id_idx').on(table.tenantId),
+  // Índice para consultas por data e tenant
+  tenantDateIdx: index('appointments_tenant_date_idx').on(table.tenantId, table.appointmentDate),
+  // Índice para consultas por profissional e data
+  professionalDateIdx: index('appointments_professional_date_idx').on(table.tenantId, table.professionalId, table.appointmentDate),
+  // Índice para consultas por cliente
+  clientIdx: index('appointments_client_idx').on(table.tenantId, table.clientId),
+}));
 
 export const tenantsRelations = relations(tenants, ({ many }) => ({
   users: many(users),
