@@ -17,7 +17,7 @@ export default function TabLayout() {
   const { user } = useAuth();
   const router = useRouter();
   const { unreadCount } = useNotifications();
-  const isProfessional = user?.role === 'professional';
+  const isOwner = user?.role === 'owner';
 
   // Proteção: redirecionar cliente se tentar acessar área de proprietário
   useEffect(() => {
@@ -66,7 +66,7 @@ export default function TabLayout() {
         name="notifications"
         options={{
           title: 'Notificações',
-          href: isProfessional ? undefined : null,
+          href: isOwner ? undefined : null,
           tabBarIcon: ({ color }) => (
             <View style={{ width: 24, height: 24 }}>
               <Ionicons name="notifications" size={24} color={color} />
@@ -86,7 +86,7 @@ export default function TabLayout() {
         name="admin"
         options={{
           title: 'Admin',
-          href: isProfessional ? undefined : null,
+          href: isOwner ? undefined : null,
           tabBarIcon: ({ color }) => (
             <Ionicons name="settings" size={24} color={color} />
           ),

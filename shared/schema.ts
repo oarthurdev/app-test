@@ -22,7 +22,7 @@ export const users = pgTable('users', {
   email: text('email').notNull(),
   phone: varchar('phone', { length: 20 }).notNull(),
   password: text('password').notNull(),
-  role: text('role').notNull().default('client'), // 'owner', 'professional' ou 'client'
+  role: text('role').notNull().default('client'), // 'owner' (proprietário) ou 'client' (cliente)
   pushToken: text('push_token'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({

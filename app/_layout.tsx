@@ -18,14 +18,18 @@ function RootLayoutNav() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const inWelcome = segments[0] === 'welcome';
 
     if (user && inAuthGroup) {
       router.replace('/(tabs)');
+    } else if (!user && !inAuthGroup && !inWelcome) {
+      router.replace('/welcome');
     }
   }, [user, loading, segments]);
 
   return (
     <Stack>
+      <Stack.Screen name="welcome" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(booking)" options={{ headerShown: false }} />

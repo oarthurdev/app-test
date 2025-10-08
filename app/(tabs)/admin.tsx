@@ -32,7 +32,7 @@ export default function AdminScreen() {
 
   // Redirecionar se não for proprietário
   useEffect(() => {
-    if (user && user.role !== 'professional') {
+    if (user && user.role !== 'owner') {
       router.replace('/(tabs)');
     }
   }, [user]);
@@ -50,14 +50,14 @@ export default function AdminScreen() {
   
   const [loading, setLoading] = useState(false);
 
-  if (user?.role !== 'professional') {
+  if (user?.role !== 'owner') {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.centerContainer}>
           <Ionicons name="lock-closed" size={64} color={theme.colors.text.tertiary} />
           <ThemedText style={styles.accessDeniedTitle}>Acesso Restrito</ThemedText>
           <ThemedText style={styles.accessDeniedText}>
-            Apenas o proprietário do estabelecimento pode acessar esta página
+            Esta área é exclusiva para proprietários de estabelecimentos
           </ThemedText>
         </View>
       </ThemedView>
