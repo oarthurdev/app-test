@@ -1,6 +1,7 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, Alert, View } from 'react-native';
+import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/contexts/AuthContext';
@@ -28,6 +29,13 @@ type ActiveTab = 'services' | 'hours';
 export default function AdminScreen() {
   const { token, user } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>('services');
+
+  // Redirecionar se não for proprietário
+  useEffect(() => {
+    if (user && user.role !== 'professional') {
+      router.replace('/(tabs)');
+    }
+  }, [user]);
   
   // Service form states
   const [serviceName, setServiceName] = useState('');

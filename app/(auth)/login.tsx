@@ -108,6 +108,23 @@ export default function LoginScreen() {
                 size="lg"
                 style={styles.loginButton}
               />
+
+              <View style={styles.divider}>
+                <View style={styles.dividerLine} />
+                <ThemedText style={styles.dividerText}>ou</ThemedText>
+                <View style={styles.dividerLine} />
+              </View>
+
+              <TouchableOpacity
+                style={styles.registerButton}
+                onPress={() => router.push('/(auth)/register-business')}
+                activeOpacity={0.7}
+              >
+                <Ionicons name="storefront" size={20} color={theme.colors.primary} />
+                <ThemedText style={styles.registerButtonText}>
+                  Cadastrar Estabelecimento
+                </ThemedText>
+              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -213,5 +230,21 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.medium,
-  }
+  },
+  registerButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    borderWidth: 2,
+    borderColor: theme.colors.primary,
+    backgroundColor: 'transparent',
+  },
+  registerButtonText: {
+    fontSize: theme.fontSize.md,
+    fontWeight: theme.fontWeight.semibold,
+    color: theme.colors.primary,
+  },
 });

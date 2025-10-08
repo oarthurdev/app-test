@@ -41,6 +41,7 @@ router.post('/api/tenants/register', async (req, res) => {
       .values({
         name,
         slug,
+        subdomain: slug, // Usar o mesmo slug como subdomain
         businessType,
         phone,
         address,

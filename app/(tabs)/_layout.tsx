@@ -1,5 +1,5 @@
-import { Tabs, router } from 'expo-router';
-import React from 'react';
+import { Tabs, useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
 import { Platform, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -15,8 +15,17 @@ import { theme } from '@/constants/Theme';
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { user } = useAuth();
+  const router = useRouter();
   const { unreadCount } = useNotifications();
   const isProfessional = user?.role === 'professional';
+
+  // Proteção: redirecionar cliente se tentar acessar área de proprietário
+  useEffect(() => {
+    if (user && user.role === 'client') {
+      // Cliente não pode acessar área administrativa
+      router.replace('/(tabs)');
+    }
+  }, [user]);
 
   return (
     <Tabs

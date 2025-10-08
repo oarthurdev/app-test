@@ -6,6 +6,7 @@ export const tenants = pgTable('tenants', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(), // URL amigável: seuapp.com/barbearia-central
+  subdomain: text('subdomain').unique(), // Para uso com subdomínios: barbearia.seuapp.com
   businessType: text('business_type'), // Ex: salão, barbearia, consultório
   phone: varchar('phone', { length: 20 }),
   address: text('address'),
