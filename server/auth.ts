@@ -7,6 +7,7 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key-change-in-producti
 export interface AuthRequest extends Request<any, any, any> {
   userId?: number;
   userRole?: string;
+  tenantId?: number;
 }
 
 export const hashPassword = async (password: string): Promise<string> => {
@@ -20,13 +21,13 @@ export const comparePassword = async (
   return bcrypt.compare(password, hashedPassword);
 };
 
-export const generateToken = (userId: number, role: string): string => {
-  return jwt.sign({ userId, role }, JWT_SECRET, { expiresIn: '7d' });
+export const generateToken = (userId: number, role: string, tenantId: number): string => {
+  return jwt.sign({ userId, role, tenantId }, JWT_SECRET, { expiresIn: '7d' });
 };
 
-export const verifyToken = (token: string): { userId: number; role: string } | null => {
+export const verifyToken = (token: string): { userId: number; role: string; tenantId: number } | null => {
   try {
-    return jwt.verify(token, JWT_SECRET) as { userId: number; role: string };
+    return jwt.verify(token, JWT_SECRET) as { userId: number; role: string; tenantId: number };
   } catch {
     return null;
   }
@@ -51,6 +52,7 @@ export const authenticateToken = (
 
   req.userId = decoded.userId;
   req.userRole = decoded.role;
+  req.tenantId = decoded.tenantId;
   next();
 };
 

@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { db } from "./db";
+import tenantRoutes from "./tenant-routes";
 import {
   tenants,
   users,
@@ -33,6 +34,9 @@ app.use(cors({
 }));
 
 app.use(express.json());
+
+// Rotas de tenant
+app.use(tenantRoutes);
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "");
 
@@ -90,7 +94,7 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(401).json({ error: "Credenciais inválidas" });
     }
 
-    const token = generateToken(user.id, user.role);
+    const token = generateToken(user.id, user.role, user.tenantId);
 
     res.json({
       token,
@@ -100,6 +104,7 @@ app.post("/api/auth/login", async (req, res) => {
         email: user.email,
         phone: user.phone,
         role: user.role,
+        tenantId: user.tenantId,
       },
     });
   } catch (error) {
