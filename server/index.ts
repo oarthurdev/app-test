@@ -35,6 +35,33 @@ app.use(cors({
 
 app.use(express.json());
 
+// Middleware para identificar tenant pelo subdomínio
+app.use(async (req, res, next) => {
+  const hostname = req.hostname;
+  
+  // Extrai o subdomínio (ex: empresa1.seudominio.com -> empresa1)
+  const subdomain = hostname.split('.')[0];
+  
+  // Se não for localhost ou replit.app, tenta identificar o tenant
+  if (!hostname.includes('localhost') && !hostname.includes('replit')) {
+    try {
+      const [tenant] = await db
+        .select()
+        .from(tenants)
+        .where(eq(tenants.subdomain, subdomain))
+        .limit(1);
+      
+      if (tenant) {
+        req.tenantId = tenant.id;
+      }
+    } catch (error) {
+      console.error('Erro ao identificar tenant:', error);
+    }
+  }
+  
+  next();
+});
+
 // Rotas de tenant
 app.use(tenantRoutes);
 
