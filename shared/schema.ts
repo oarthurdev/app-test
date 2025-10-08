@@ -1,13 +1,27 @@
 import { pgTable, serial, text, timestamp, integer, boolean, decimal, varchar, time } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
-export const users = pgTable('users', {
+// Tabela de empresas/estabelecimentos
+export const tenants = pgTable('tenants', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
-  email: text('email').notNull().unique(),
+  slug: text('slug').notNull().unique(), // URL amigável: seuapp.com/barbearia-central
+  businessType: text('business_type'), // Ex: salão, barbearia, consultório
+  phone: varchar('phone', { length: 20 }),
+  address: text('address'),
+  logo: text('logo'),
+  active: boolean('active').notNull().default(true),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+});
+
+export const users = pgTable('users', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').references(() => tenants.id).notNull(), // Vincula usuário à empresa
+  name: text('name').notNull(),
+  email: text('email').notNull(),
   phone: varchar('phone', { length: 20 }).notNull(),
   password: text('password').notNull(),
-  role: text('role').notNull().default('client'),
+  role: text('role').notNull().default('client'), // 'owner', 'professional' ou 'client'
   pushToken: text('push_token'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
@@ -25,6 +39,7 @@ export const notifications = pgTable('notifications', {
 
 export const services = pgTable('services', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').references(() => tenants.id).notNull(),
   professionalId: integer('professional_id').references(() => users.id).notNull(),
   name: text('name').notNull(),
   description: text('description'),
@@ -35,6 +50,7 @@ export const services = pgTable('services', {
 
 export const businessHours = pgTable('business_hours', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').references(() => tenants.id).notNull(),
   professionalId: integer('professional_id').references(() => users.id).notNull(),
   dayOfWeek: integer('day_of_week').notNull(),
   startTime: time('start_time').notNull(),
@@ -44,6 +60,7 @@ export const businessHours = pgTable('business_hours', {
 
 export const appointments = pgTable('appointments', {
   id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').references(() => tenants.id).notNull(),
   clientId: integer('client_id').references(() => users.id),
   serviceId: integer('service_id').references(() => services.id).notNull(),
   professionalId: integer('professional_id').references(() => users.id).notNull(),
@@ -58,7 +75,17 @@ export const appointments = pgTable('appointments', {
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
 
-export const usersRelations = relations(users, ({ many }) => ({
+export const tenantsRelations = relations(tenants, ({ many }) => ({
+  users: many(users),
+  services: many(services),
+  businessHours: many(businessHours),
+}));
+
+export const usersRelations = relations(users, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [users.tenantId],
+    references: [tenants.id],
+  }),
   servicesOffered: many(services),
   businessHours: many(businessHours),
   clientAppointments: many(appointments),
@@ -73,6 +100,10 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 }));
 
 export const servicesRelations = relations(services, ({ one, many }) => ({
+  tenant: one(tenants, {
+    fields: [services.tenantId],
+    references: [tenants.id],
+  }),
   professional: one(users, {
     fields: [services.professionalId],
     references: [users.id],
@@ -81,6 +112,10 @@ export const servicesRelations = relations(services, ({ one, many }) => ({
 }));
 
 export const businessHoursRelations = relations(businessHours, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [businessHours.tenantId],
+    references: [tenants.id],
+  }),
   professional: one(users, {
     fields: [businessHours.professionalId],
     references: [users.id],
@@ -88,6 +123,10 @@ export const businessHoursRelations = relations(businessHours, ({ one }) => ({
 }));
 
 export const appointmentsRelations = relations(appointments, ({ one }) => ({
+  tenant: one(tenants, {
+    fields: [appointments.tenantId],
+    references: [tenants.id],
+  }),
   client: one(users, {
     fields: [appointments.clientId],
     references: [users.id],
@@ -102,6 +141,8 @@ export const appointmentsRelations = relations(appointments, ({ one }) => ({
   }),
 }));
 
+export type Tenant = typeof tenants.$inferSelect;
+export type InsertTenant = typeof tenants.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Service = typeof services.$inferSelect;

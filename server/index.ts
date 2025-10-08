@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { db } from "./db";
 import {
+  tenants,
   users,
   services,
   businessHours,
