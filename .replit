@@ -122,9 +122,5 @@ expertMode = true
 
 [deployment]
 deploymentTarget = "vm"
-run = [
-  "bash",
-  "-c",
-  "npm run server & EXPO_PUBLIC_API_URL=https://$REPL_SLUG.$REPL_OWNER.repl.co EXPO_METRO_PORT=5000 npx expo start --web --port 5000",
-]
-build = ["npm", "install"]
+run = ["sh", "-c", "npm run server & EXPO_PUBLIC_API_URL=https://$REPL_SLUG.$REPL_OWNER.repl.co EXPO_METRO_PORT=5000 npx expo start --web --port 5000"]
+build = ["sh", "-c", "npm install"]
