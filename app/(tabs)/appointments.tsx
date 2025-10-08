@@ -15,7 +15,6 @@ interface Appointment {
   paymentStatus: string;
   serviceName: string;
   servicePrice: string;
-  professionalName: string;
 }
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
@@ -152,11 +151,6 @@ export default function AppointmentsScreen() {
               minute: '2-digit',
             })}
           </ThemedText>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Ionicons name="person-outline" size={20} color={theme.colors.primary} />
-          <ThemedText style={styles.infoText}>{item.professionalName}</ThemedText>
         </View>
 
         <View style={styles.divider} />

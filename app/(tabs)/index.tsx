@@ -107,12 +107,6 @@ export default function HomeScreen() {
               <ThemedText style={styles.serviceName} numberOfLines={1}>
                 {item.name}
               </ThemedText>
-              <View style={styles.professionalTag}>
-                <Ionicons name="person" size={12} color={theme.colors.text.tertiary} />
-                <ThemedText style={styles.professionalName} numberOfLines={1}>
-                  {item.professionalName}
-                </ThemedText>
-              </View>
             </View>
           </View>
 

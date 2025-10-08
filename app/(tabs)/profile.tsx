@@ -52,7 +52,7 @@ export default function ProfileScreen() {
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>
-              Área Profissional
+              Área do Estabelecimento
             </ThemedText>
 
             <Card style={styles.menuCard}>
@@ -62,17 +62,17 @@ export default function ProfileScreen() {
               >
                 <View style={styles.menuIconContainer}>
                   <Ionicons
-                    name="briefcase"
+                    name="business"
                     size={24}
                     color={theme.colors.primary}
                   />
                 </View>
                 <View style={styles.menuContent}>
                   <ThemedText style={styles.menuTitle}>
-                    Login Profissional
+                    Acessar Painel
                   </ThemedText>
                   <ThemedText style={styles.menuDescription}>
-                    Acesse sua área para gerenciar serviços e agendamentos
+                    Gerencie serviços, horários e agendamentos do seu estabelecimento
                   </ThemedText>
                 </View>
                 <Ionicons
@@ -190,7 +190,7 @@ export default function ProfileScreen() {
           </View>
           <ThemedText style={styles.userName}>{user?.name}</ThemedText>
           <ThemedText style={styles.userRole}>
-            {isProfessional ? "⭐ Profissional" : "👤 Cliente"}
+            {isProfessional ? "🏪 Estabelecimento" : "👤 Cliente"}
           </ThemedText>
         </View>
       </LinearGradient>
@@ -245,7 +245,7 @@ export default function ProfileScreen() {
               <View style={styles.infoContent}>
                 <ThemedText style={styles.infoLabel}>Tipo de Conta</ThemedText>
                 <ThemedText style={styles.infoValue}>
-                  {isProfessional ? "Conta Profissional" : "Conta Cliente"}
+                  {isProfessional ? "Proprietário" : "Cliente"}
                 </ThemedText>
               </View>
             </View>
@@ -255,7 +255,7 @@ export default function ProfileScreen() {
         {isProfessional && (
           <View style={styles.section}>
             <ThemedText style={styles.sectionTitle}>
-              Recursos Profissionais
+              Recursos do Estabelecimento
             </ThemedText>
             <Card style={styles.featureCard}>
               <View style={styles.featureContent}>
@@ -266,11 +266,10 @@ export default function ProfileScreen() {
                 />
                 <View style={styles.featureText}>
                   <ThemedText style={styles.featureTitle}>
-                    Gerenciar Serviços
+                    Gerenciar Estabelecimento
                   </ThemedText>
                   <ThemedText style={styles.featureDescription}>
-                    Acesse o painel Admin para cadastrar e gerenciar seus
-                    serviços
+                    Acesse o painel Admin para cadastrar serviços, horários e gerenciar agendamentos
                   </ThemedText>
                 </View>
               </View>

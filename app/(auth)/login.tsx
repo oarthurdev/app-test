@@ -61,7 +61,7 @@ export default function LoginScreen() {
             </View>
             <ThemedText style={styles.appName}>BookPro</ThemedText>
             <ThemedText style={styles.tagline}>
-              Sistema Profissional de Agendamentos
+              Sistema de Agendamentos para seu Negócio
             </ThemedText>
           </View>
 

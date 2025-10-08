@@ -18,7 +18,6 @@ interface Service {
   description: string;
   price: string;
   duration: number;
-  professionalName: string;
 }
 
 interface BusinessHour {
@@ -164,7 +163,7 @@ export default function ServiceBookingScreen() {
         </TouchableOpacity>
         <View style={styles.headerContent}>
           <ThemedText style={styles.headerTitle}>Data e hora</ThemedText>
-          <ThemedText style={styles.headerSubtitle}>{service.professionalName}</ThemedText>
+          <ThemedText style={styles.headerSubtitle}>Selecione seu horário</ThemedText>
         </View>
       </View>
 

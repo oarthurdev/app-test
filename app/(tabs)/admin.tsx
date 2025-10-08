@@ -49,7 +49,7 @@ export default function AdminScreen() {
           <Ionicons name="lock-closed" size={64} color={theme.colors.text.tertiary} />
           <ThemedText style={styles.accessDeniedTitle}>Acesso Restrito</ThemedText>
           <ThemedText style={styles.accessDeniedText}>
-            Apenas profissionais podem acessar esta página
+            Apenas o proprietário do estabelecimento pode acessar esta página
           </ThemedText>
         </View>
       </ThemedView>
@@ -209,9 +209,9 @@ export default function AdminScreen() {
           <View style={styles.headerIcon}>
             <Ionicons name="settings-outline" size={32} color={theme.colors.text.inverse} />
           </View>
-          <ThemedText style={styles.title}>Painel Administrativo</ThemedText>
+          <ThemedText style={styles.title}>Painel do Estabelecimento</ThemedText>
           <ThemedText style={styles.subtitle}>
-            Configure seus serviços e disponibilidade
+            Configure serviços e horários de atendimento
           </ThemedText>
         </View>
 
@@ -267,7 +267,7 @@ export default function AdminScreen() {
                 <ThemedText style={styles.infoTitle}>Como funciona?</ThemedText>
               </View>
               <ThemedText style={styles.infoText}>
-                Cadastre os serviços que você oferece. Cada serviço precisa ter um nome, preço e duração estimada.
+                Cadastre os serviços do seu estabelecimento. Cada serviço precisa ter um nome, preço e duração estimada.
               </ThemedText>
             </Card>
 
