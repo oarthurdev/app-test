@@ -6,7 +6,6 @@ export const tenants = pgTable('tenants', {
   id: serial('id').primaryKey(),
   name: text('name').notNull(),
   slug: text('slug').notNull().unique(), // URL amigável: seuapp.com/barbearia-central
-  subdomain: text('subdomain').unique(), // Para uso com subdomínios: barbearia.seuapp.com
   businessType: text('business_type'), // Ex: salão, barbearia, consultório
   phone: varchar('phone', { length: 20 }),
   address: text('address'),
@@ -22,7 +21,7 @@ export const users = pgTable('users', {
   email: text('email').notNull(),
   phone: varchar('phone', { length: 20 }).notNull(),
   password: text('password').notNull(),
-  role: text('role').notNull().default('client'), // 'owner' (proprietário) ou 'client' (cliente)
+  role: text('role').notNull().default('client'), // 'owner', 'professional' ou 'client'
   pushToken: text('push_token'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 }, (table) => ({

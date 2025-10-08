@@ -41,7 +41,6 @@ router.post('/api/tenants/register', async (req, res) => {
       .values({
         name,
         slug,
-        subdomain: slug, // Usar o mesmo slug como subdomain
         businessType,
         phone,
         address,
@@ -60,7 +59,7 @@ router.post('/api/tenants/register', async (req, res) => {
         email: ownerEmail,
         phone: ownerPhone,
         password: hashedPassword,
-        role: 'owner', // Proprietário do estabelecimento
+        role: 'owner',
       })
       .returning();
 

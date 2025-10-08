@@ -1,5 +1,5 @@
-import { Tabs, useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import { Tabs, router } from 'expo-router';
+import React from 'react';
 import { Platform, TouchableOpacity, View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -15,17 +15,8 @@ import { theme } from '@/constants/Theme';
 export default function TabLayout() {
   const colorScheme = useColorScheme();
   const { user } = useAuth();
-  const router = useRouter();
   const { unreadCount } = useNotifications();
-  const isOwner = user?.role === 'owner';
-
-  // Proteção: redirecionar cliente se tentar acessar área de proprietário
-  useEffect(() => {
-    if (user && user.role === 'client') {
-      // Cliente não pode acessar área administrativa
-      router.replace('/(tabs)');
-    }
-  }, [user]);
+  const isProfessional = user?.role === 'professional';
 
   return (
     <Tabs
@@ -66,7 +57,7 @@ export default function TabLayout() {
         name="notifications"
         options={{
           title: 'Notificações',
-          href: isOwner ? undefined : null,
+          href: isProfessional ? undefined : null,
           tabBarIcon: ({ color }) => (
             <View style={{ width: 24, height: 24 }}>
               <Ionicons name="notifications" size={24} color={color} />
@@ -86,7 +77,7 @@ export default function TabLayout() {
         name="admin"
         options={{
           title: 'Admin',
-          href: isOwner ? undefined : null,
+          href: isProfessional ? undefined : null,
           tabBarIcon: ({ color }) => (
             <Ionicons name="settings" size={24} color={color} />
           ),

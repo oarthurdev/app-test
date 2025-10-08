@@ -8,20 +8,6 @@
       "when": 1759516345822,
       "tag": "0000_tranquil_night_nurse",
       "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1759952070654,
-      "tag": "0001_clammy_komodo",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1759952759010,
-      "tag": "0002_faulty_golden_guardian",
-      "breakpoints": true
     }
   ]
 }

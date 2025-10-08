@@ -1,7 +1,6 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { StyleSheet, ScrollView, TouchableOpacity, Alert, View } from 'react-native';
-import { router } from 'expo-router';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,13 +28,6 @@ type ActiveTab = 'services' | 'hours';
 export default function AdminScreen() {
   const { token, user } = useAuth();
   const [activeTab, setActiveTab] = useState<ActiveTab>('services');
-
-  // Redirecionar se não for proprietário
-  useEffect(() => {
-    if (user && user.role !== 'owner') {
-      router.replace('/(tabs)');
-    }
-  }, [user]);
   
   // Service form states
   const [serviceName, setServiceName] = useState('');
@@ -50,14 +42,14 @@ export default function AdminScreen() {
   
   const [loading, setLoading] = useState(false);
 
-  if (user?.role !== 'owner') {
+  if (user?.role !== 'professional') {
     return (
       <ThemedView style={styles.container}>
         <View style={styles.centerContainer}>
           <Ionicons name="lock-closed" size={64} color={theme.colors.text.tertiary} />
           <ThemedText style={styles.accessDeniedTitle}>Acesso Restrito</ThemedText>
           <ThemedText style={styles.accessDeniedText}>
-            Esta área é exclusiva para proprietários de estabelecimentos
+            Apenas o proprietário do estabelecimento pode acessar esta página
           </ThemedText>
         </View>
       </ThemedView>

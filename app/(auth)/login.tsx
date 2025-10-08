@@ -56,20 +56,20 @@ export default function LoginScreen() {
                 colors={['rgba(255,255,255,0.3)', 'rgba(255,255,255,0.1)']}
                 style={styles.logoGradient}
               >
-                <Ionicons name="briefcase" size={48} color="#fff" />
+                <Ionicons name="business" size={48} color="#fff" />
               </LinearGradient>
             </View>
             <ThemedText style={styles.appName}>BookPro</ThemedText>
             <ThemedText style={styles.tagline}>
-              Área do Proprietário
+              Sistema de Agendamentos para seu Negócio
             </ThemedText>
           </View>
 
           <View style={styles.formContainer}>
             <View style={styles.welcomeSection}>
-              <ThemedText style={styles.welcomeTitle}>Área do Proprietário</ThemedText>
+              <ThemedText style={styles.welcomeTitle}>Bem-vindo de volta</ThemedText>
               <ThemedText style={styles.welcomeSubtitle}>
-                Faça login para gerenciar seu estabelecimento
+                Faça login para continuar
               </ThemedText>
             </View>
 
@@ -108,23 +108,6 @@ export default function LoginScreen() {
                 size="lg"
                 style={styles.loginButton}
               />
-
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <ThemedText style={styles.dividerText}>ou</ThemedText>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <TouchableOpacity
-                style={styles.registerButton}
-                onPress={() => router.push('/(auth)/register-business')}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="storefront" size={20} color={theme.colors.primary} />
-                <ThemedText style={styles.registerButtonText}>
-                  Cadastrar Estabelecimento
-                </ThemedText>
-              </TouchableOpacity>
             </View>
           </View>
         </ScrollView>
@@ -230,21 +213,5 @@ const styles = StyleSheet.create({
     color: theme.colors.text.tertiary,
     fontSize: theme.fontSize.sm,
     fontWeight: theme.fontWeight.medium,
-  },
-  registerButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.sm,
-    paddingVertical: theme.spacing.md,
-    borderRadius: theme.borderRadius.lg,
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
-    backgroundColor: 'transparent',
-  },
-  registerButtonText: {
-    fontSize: theme.fontSize.md,
-    fontWeight: theme.fontWeight.semibold,
-    color: theme.colors.primary,
-  },
+  }
 });
