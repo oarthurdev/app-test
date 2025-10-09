@@ -1,54 +1,20 @@
-export default {
-  expo: {
-    name: "expo-on-replit",
-    slug: "expo-on-replit",
-    version: "1.0.0",
-    orientation: "portrait",
-    icon: "./assets/images/icon.png",
-    scheme: "myapp",
-    userInterfaceStyle: "automatic",
-    newArchEnabled: true,
-    platforms: ["ios", "android", "web"],
-    ios: {
-      supportsTablet: true,
-      bundleIdentifier: "com.anonymous.expoonreplit"
-    },
-    android: {
-      adaptiveIcon: {
-        foregroundImage: "./assets/images/adaptive-icon.png",
-        backgroundColor: "#ffffff"
+// app.config.js
+const fs = require('fs');
+
+module.exports = () => {
+  const empresa = JSON.parse(fs.readFileSync('./empresa.json', 'utf-8'));
+
+  return {
+    expo: {
+      name: empresa.nome_fantasia,
+      slug: empresa.slug,
+      version: "1.0.0",
+      android: {
+        package: `com.vortex.${empresa.slug}`,
       },
-      edgeToEdgeEnabled: true,
-      package: "com.anonymous.expoonreplit"
-    },
-    web: {
-      bundler: "metro",
-      output: "static",
-      favicon: "./assets/images/favicon.png"
-    },
-    plugins: [
-      "expo-router",
-      [
-        "expo-splash-screen",
-        {
-          image: "./assets/images/splash-icon.png",
-          imageWidth: 200,
-          resizeMode: "contain",
-          backgroundColor: "#ffffff"
-        }
-      ],
-      "expo-web-browser"
-    ],
-    experiments: {
-      typedRoutes: true
-    },
-    extra: {
-      router: {
-        origin: false
-      },
-      eas: {
-        projectId: "643c29e9-3250-4a89-a30c-180632ca46ad"
+      extra: {
+        empresa,
       }
     }
-  }
+  };
 };
