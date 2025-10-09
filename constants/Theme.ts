@@ -1,37 +1,41 @@
+// Função para obter a cor primária do tenant (pode ser sobrescrita)
+const getTenantPrimaryColor = () => {
+  // Será sobrescrito dinamicamente pelo contexto do tenant
+  return '#2563eb';
+};
 
 export const theme = {
   colors: {
-    // Primary palette - Azul profissional moderno
-    primary: '#2563eb',
+    primary: getTenantPrimaryColor(),
     primaryDark: '#1e40af',
     primaryLight: '#3b82f6',
-    
+
     // Secondary palette - Roxo elegante
     secondary: '#7c3aed',
     secondaryDark: '#6d28d9',
     secondaryLight: '#8b5cf6',
-    
+
     // Accent colors
     accent: '#ec4899',
     accentDark: '#db2777',
-    
+
     // Status colors
     success: '#10b981',
     successDark: '#059669',
     successLight: '#34d399',
-    
+
     warning: '#f59e0b',
     warningDark: '#d97706',
     warningLight: '#fbbf24',
-    
+
     error: '#ef4444',
     errorDark: '#dc2626',
     errorLight: '#f87171',
-    
+
     info: '#06b6d4',
     infoDark: '#0891b2',
     infoLight: '#22d3ee',
-    
+
     // Background colors - Design moderno
     background: {
       primary: '#ffffff',
@@ -40,7 +44,7 @@ export const theme = {
       dark: '#0f172a',
       card: '#ffffff',
     },
-    
+
     // Text colors - Hierarquia clara
     text: {
       primary: '#0f172a',
@@ -49,14 +53,14 @@ export const theme = {
       inverse: '#ffffff',
       link: '#2563eb',
     },
-    
+
     // Border colors
     border: {
       light: '#e2e8f0',
       medium: '#cbd5e1',
       dark: '#94a3b8',
     },
-    
+
     // Gradients
     gradients: {
       primary: ['#2563eb', '#1e40af'],
@@ -65,10 +69,10 @@ export const theme = {
       sunset: ['#f59e0b', '#ec4899'],
       ocean: ['#06b6d4', '#2563eb'],
     },
-    
+
     overlay: 'rgba(15, 23, 42, 0.6)',
   },
-  
+
   spacing: {
     xxs: 2,
     xs: 4,
@@ -79,7 +83,7 @@ export const theme = {
     xxl: 48,
     xxxl: 64,
   },
-  
+
   borderRadius: {
     xs: 4,
     sm: 8,
@@ -89,7 +93,7 @@ export const theme = {
     xxl: 32,
     full: 9999,
   },
-  
+
   fontSize: {
     xs: 11,
     sm: 13,
@@ -100,7 +104,7 @@ export const theme = {
     xxxl: 32,
     display: 40,
   },
-  
+
   fontWeight: {
     light: '300' as '300',
     regular: '400' as '400',
@@ -109,7 +113,7 @@ export const theme = {
     bold: '700' as '700',
     extrabold: '800' as '800',
   },
-  
+
   shadows: {
     xs: {
       shadowColor: '#0f172a',
@@ -147,7 +151,7 @@ export const theme = {
       elevation: 12,
     },
   },
-  
+
   animation: {
     fast: 150,
     normal: 250,

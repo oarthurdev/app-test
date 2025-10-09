@@ -10,6 +10,7 @@ export const tenants = pgTable('tenants', {
   phone: varchar('phone', { length: 20 }),
   address: text('address'),
   logo: text('logo'),
+  primaryColor: text('primary_color'),
   active: boolean('active').notNull().default(true),
   createdAt: timestamp('created_at').defaultNow().notNull(),
 });
