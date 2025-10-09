@@ -1,0 +1,13 @@
+{
+  "id": 3,
+  "name": "Vortex Hub",
+  "slug": "vortexhub",
+  "business_type": "Barbearia",
+  "phone": "47999273563",
+  "address": "Rua turim",
+  "logo": null,
+  "active": true,
+  "created_at": "2025-10-08T19:55:30.118435",
+  "primary_color": "#FF5733",
+  "projectId": "40cc677d-38c0-4056-a7bb-7f4d53b728e2"
+}

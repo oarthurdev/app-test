@@ -6,14 +6,17 @@ module.exports = () => {
 
   return {
     expo: {
-      name: empresa.nome_fantasia,
+      name: empresa.name,
       slug: empresa.slug,
       version: "1.0.0",
       android: {
-        package: `com.vortex.${empresa.slug}`,
+        package: "com.vortex.agendamento"
       },
       extra: {
         empresa,
+        eas: {
+          projectId: empresa.projectId
+        }
       }
     }
   };
