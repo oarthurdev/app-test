@@ -91,6 +91,12 @@ async function generateTenantBuilds() {
     fs.writeFileSync(appJsonPath, JSON.stringify(appConfig, null, 2));
     console.log(`  ✅ app.json gerado em: builds/${tenant.slug}/app.json`);
 
+    // Gerar app.config.js específico para o tenant
+    const appConfigJs = `module.exports = ${JSON.stringify(appConfig, null, 2)};`;
+    const appConfigJsPath = path.join(tenantDir, 'app.config.js');
+    fs.writeFileSync(appConfigJsPath, appConfigJs);
+    console.log(`  ✅ app.config.js gerado`);
+
     // Gerar arquivo de configuração de tema
     const themeConfig = `
 // Auto-gerado para ${tenant.name}
@@ -136,32 +142,73 @@ export const tenantTheme = {
 
 ## Como fazer o build
 
-### 1. Configurar EAS Project
+### 1. Preparar o ambiente de build
 \`\`\`bash
-cd ${tenantDir}
+# Da raiz do projeto
+npm run build-tenant ${tenant.slug}
+\`\`\`
+
+### 2. Entrar no diretório de build
+\`\`\`bash
+cd builds/${tenant.slug}/build_temp
+\`\`\`
+
+### 3. Instalar dependências
+\`\`\`bash
+npm install
+\`\`\`
+
+### 4. Inicializar projeto EAS (primeira vez)
+\`\`\`bash
 eas init --id YOUR_PROJECT_ID
 \`\`\`
 
-### 2. Build de Preview
+### 5. Build de Preview
 \`\`\`bash
 eas build --platform android --profile preview
 \`\`\`
 
-### 3. Build de Produção
+### 6. Build de Produção
 \`\`\`bash
 eas build --platform android --profile production
 \`\`\`
 
-## Configuração do .env
-Adicione ao seu .env:
-\`\`\`
-EAS_PROJECT_ID_${tenant.slug.toUpperCase().replace(/-/g, '_')}=your-project-id-here
-\`\`\`
+## Notas importantes
+- O diretório \`build_temp\` é recriado a cada execução do script de build
+- As configurações específicas do tenant estão em \`app.json\` e \`app.config.js\`
+- Não faça alterações diretas em \`build_temp\`, elas serão perdidas
 `;
 
     const readmePath = path.join(tenantDir, 'README.md');
     fs.writeFileSync(readmePath, readme);
     console.log(`  ✅ README.md gerado`);
+
+    // Gerar eas.json específico (opcional, se necessário customização)
+    const easConfig = {
+      "cli": {
+        "version": ">= 16.20.0",
+        "appVersionSource": "remote"
+      },
+      "build": {
+        "development": {
+          "developmentClient": true,
+          "distribution": "internal"
+        },
+        "preview": {
+          "distribution": "internal"
+        },
+        "production": {
+          "autoIncrement": true
+        }
+      },
+      "submit": {
+        "production": {}
+      }
+    };
+
+    const easJsonPath = path.join(tenantDir, 'eas.json');
+    fs.writeFileSync(easJsonPath, JSON.stringify(easConfig, null, 2));
+    console.log(`  ✅ eas.json gerado`);
   }
 
   console.log('\n\n✨ Processo concluído! Builds gerados em: ./builds/\n');
