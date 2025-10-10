@@ -107,6 +107,25 @@ async function main() {
     return;
   }
 
+  // Verificar se EAS está inicializado
+  console.log(chalk.yellow('\n🔧 Verificando configuração do EAS...'));
+  
+  if (!fs.existsSync('app.json') && !fs.existsSync('app.config.js')) {
+    console.log(chalk.red('❌ Arquivo app.json ou app.config.js não encontrado.'));
+    process.exit(1);
+  }
+
+  // Tentar inicializar EAS se necessário
+  console.log(chalk.cyan('⚙️ Inicializando EAS (se necessário)...\n'));
+  const initProcess = spawn('npx', ['eas', 'init', '--non-interactive'], {
+    stdio: 'inherit',
+    shell: true
+  });
+
+  await new Promise((resolve) => {
+    initProcess.on('close', resolve);
+  });
+
   console.log(chalk.magentaBright(`\n🏗️ Iniciando builds locais para ${tenants.length} tenants...\n`));
 
   // Executar builds sequencialmente para evitar conflitos

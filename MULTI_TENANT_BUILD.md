@@ -29,6 +29,14 @@ SUPABASE_URL=https://seu-projeto.supabase.co
 SUPABASE_ANON_KEY=sua-chave-anonima
 ```
 
+### 2. Login no EAS CLI (Apenas uma vez)
+
+Antes de fazer o primeiro build, faça login na sua conta Expo:
+
+```bash
+npx eas login
+```
+
 ### 2. Estrutura da Tabela Tenants
 
 Certifique-se que a tabela `tenants` no Supabase possui os campos:
@@ -58,11 +66,14 @@ npm run build-tenants
 ```
 
 Este comando irá:
-1. Buscar todos os tenants ativos no Supabase
-2. Para cada tenant:
+1. Verificar e inicializar o EAS automaticamente (se necessário)
+2. Buscar todos os tenants ativos no Supabase
+3. Para cada tenant:
    - Gerar `empresa.json` com os dados
    - Executar `eas build --local` para Android
    - Salvar o APK em `builds/{slug}/`
+
+**Nota:** O script executa `eas init --non-interactive` automaticamente antes do primeiro build para garantir que o projeto esteja configurado.
 
 ### Opção 2: Build Manual de um Tenant Específico
 
