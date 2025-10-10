@@ -38,24 +38,47 @@ async function buildTenant(tenant: any) {
   console.log(chalk.cyan('📁 empresa.json gerado com sucesso.'));
   console.log(chalk.gray(JSON.stringify(empresaData, null, 2)));
 
-  // 2. Inicializar EAS para o tenant (se necessário)
-  console.log(chalk.yellow('\n🔧 Inicializando projeto EAS...'));
+  // 2. Verificar se o projeto EAS já existe
+  console.log(chalk.yellow('\n🔧 Verificando projeto EAS...'));
   
-  const easInitProcess = spawn('npx', ['eas', 'init', '--force'], {
-    stdio: 'inherit',
-    shell: true
-  });
-
-  const initExitCode: number = await new Promise((resolve) => {
-    easInitProcess.on('close', resolve);
-  });
-
-  if (initExitCode !== 0) {
-    console.error(chalk.redBright(`❌ Falha ao inicializar EAS para ${tenant.slug}`));
-    return;
+  // Verificar se app.json/app.config.js tem projectId configurado
+  let needsInit = false;
+  
+  try {
+    const appConfig = require(path.resolve('app.config.js'));
+    const config = typeof appConfig === 'function' ? appConfig() : appConfig;
+    
+    if (!config.expo?.extra?.eas?.projectId) {
+      needsInit = true;
+      console.log(chalk.gray('Projeto EAS não configurado, será inicializado...'));
+    } else {
+      console.log(chalk.green(`✅ Projeto EAS já configurado: ${config.expo.extra.eas.projectId}`));
+    }
+  } catch (err) {
+    needsInit = true;
+    console.log(chalk.gray('Configuração não encontrada, será inicializado...'));
   }
 
-  console.log(chalk.green('✅ EAS inicializado com sucesso!\n'));
+  // Inicializar apenas se necessário
+  if (needsInit) {
+    console.log(chalk.yellow('🔧 Inicializando projeto EAS...'));
+    
+    const easInitProcess = spawn('npx', ['eas', 'init'], {
+      stdio: 'inherit',
+      shell: true
+    });
+
+    const initExitCode: number = await new Promise((resolve) => {
+      easInitProcess.on('close', resolve);
+    });
+
+    if (initExitCode !== 0) {
+      console.error(chalk.redBright(`❌ Falha ao inicializar EAS para ${tenant.slug}`));
+      return;
+    }
+
+    console.log(chalk.green('✅ EAS inicializado com sucesso!\n'));
+  }
 
   // 3. Submeter build LOCAL para EAS
   console.log(chalk.yellow('⚙️ Iniciando build LOCAL com EAS...'));
