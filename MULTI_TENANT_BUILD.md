@@ -74,14 +74,15 @@ Este comando irá:
 2. Buscar todos os tenants ativos no Supabase
 3. Para cada tenant:
    - Gerar `empresa.json` com os dados
-   - Verificar se o projeto EAS já existe
-   - Inicializar o projeto EAS apenas se necessário (primeira vez)
+   - Verificar se o projeto EAS já existe (no Supabase ou variável de ambiente)
+   - Inicializar o projeto EAS automaticamente se necessário (sem interação do usuário)
+   - Salvar o `projectId` no Supabase automaticamente
    - Executar `eas build --local` para Android
    - Salvar o APK em `builds/{slug}/`
 
 **Importante:** Certifique-se de estar logado no EAS antes (`npx eas login`).
 
-**Nota:** O script verifica automaticamente se o projeto EAS já está configurado. Se sim, reutiliza o mesmo projeto. Se não, inicializa um novo projeto EAS.
+**Nota:** O script é **totalmente automatizado**. Ele cria projetos EAS automaticamente quando necessário, responde "yes" aos prompts, e salva os `projectId` no Supabase para reutilização futura. Nenhuma interação manual é necessária durante o build.
 
 ### Opção 2: Build Manual de um Tenant Específico
 

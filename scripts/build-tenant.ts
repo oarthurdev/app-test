@@ -38,46 +38,51 @@ async function buildTenant(tenant: any) {
   console.log(chalk.cyan('📁 empresa.json gerado com sucesso.'));
   console.log(chalk.gray(JSON.stringify(empresaData, null, 2)));
 
-  // 2. Verificar se o projeto EAS já existe
+  // 2. Verificar se o projeto EAS já existe e inicializar automaticamente se necessário
   console.log(chalk.yellow('\n🔧 Verificando projeto EAS...'));
   
-  // Verificar se app.json/app.config.js tem projectId configurado
-  let needsInit = false;
+  let projectId = empresaData.projectId;
   
-  try {
-    const appConfig = require(path.resolve('app.config.js'));
-    const config = typeof appConfig === 'function' ? appConfig() : appConfig;
+  // Se não tem projectId no .env, verificar se já existe no sistema
+  if (!projectId) {
+    console.log(chalk.yellow('🔧 Inicializando projeto EAS automaticamente...'));
     
-    if (!config.expo?.extra?.eas?.projectId) {
-      needsInit = true;
-      console.log(chalk.gray('Projeto EAS não configurado, será inicializado...'));
-    } else {
-      console.log(chalk.green(`✅ Projeto EAS já configurado: ${config.expo.extra.eas.projectId}`));
-    }
-  } catch (err) {
-    needsInit = true;
-    console.log(chalk.gray('Configuração não encontrada, será inicializado...'));
-  }
-
-  // Inicializar apenas se necessário
-  if (needsInit) {
-    console.log(chalk.yellow('🔧 Inicializando projeto EAS...'));
-    
-    const easInitProcess = spawn('npx', ['eas', 'init'], {
-      stdio: 'inherit',
+    const easInitProcess = spawn('npx', ['eas', 'init', '--non-interactive'], {
+      stdio: 'pipe',
       shell: true
+    });
+
+    let output = '';
+    easInitProcess.stdout?.on('data', (data) => {
+      output += data.toString();
+      process.stdout.write(data);
+    });
+
+    easInitProcess.stderr?.on('data', (data) => {
+      output += data.toString();
+      process.stderr.write(data);
     });
 
     const initExitCode: number = await new Promise((resolve) => {
       easInitProcess.on('close', resolve);
     });
 
-    if (initExitCode !== 0) {
+    // Extrair o projectId do output
+    const projectIdMatch = output.match(/"projectId":\s*"([^"]+)"/);
+    if (projectIdMatch && projectIdMatch[1]) {
+      projectId = projectIdMatch[1];
+      console.log(chalk.green(`✅ Projeto EAS criado: ${projectId}`));
+    } else if (initExitCode !== 0) {
       console.error(chalk.redBright(`❌ Falha ao inicializar EAS para ${tenant.slug}`));
       return;
     }
 
-    console.log(chalk.green('✅ EAS inicializado com sucesso!\n'));
+    // Atualizar empresa.json com o projectId
+    empresaData.projectId = projectId;
+    fs.writeFileSync('empresa.json', JSON.stringify(empresaData, null, 2));
+    console.log(chalk.cyan('📁 empresa.json atualizado com projectId'));
+  } else {
+    console.log(chalk.green(`✅ Projeto EAS já configurado: ${projectId}`));
   }
 
   // 3. Submeter build LOCAL para EAS
@@ -106,7 +111,22 @@ async function buildTenant(tenant: any) {
 
   console.log(chalk.greenBright(`✅ Build LOCAL finalizado com sucesso para ${tenant.name}!`));
 
-  // 4. Mover o APK gerado para a pasta do tenant
+  // 4. Salvar projectId no Supabase se foi criado agora
+  if (projectId && !tenant.project_id) {
+    console.log(chalk.yellow('💾 Salvando projectId no Supabase...'));
+    const { error: updateError } = await supabase
+      .from('tenants')
+      .update({ project_id: projectId })
+      .eq('id', tenant.id);
+
+    if (updateError) {
+      console.log(chalk.yellow(`⚠️ Não foi possível salvar o projectId: ${updateError.message}`));
+    } else {
+      console.log(chalk.green('✅ ProjectId salvo no Supabase!'));
+    }
+  }
+
+  // 5. Mover o APK gerado para a pasta do tenant
   const apkPattern = /\.apk$/;
   const files = fs.readdirSync('.');
   const apkFile = files.find(f => apkPattern.test(f));
@@ -124,7 +144,7 @@ async function buildTenant(tenant: any) {
     console.log(chalk.yellow('⚠️ Nenhum APK encontrado na raiz do projeto.'));
   }
 
-  // 5. Limpar empresa.json
+  // 6. Limpar empresa.json
   if (fs.existsSync('empresa.json')) {
     fs.unlinkSync('empresa.json');
   }
