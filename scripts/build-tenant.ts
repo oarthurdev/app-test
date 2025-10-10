@@ -38,19 +38,70 @@ async function buildTenant(tenant: any) {
   console.log(chalk.cyan('📁 empresa.json gerado com sucesso.'));
   console.log(chalk.gray(JSON.stringify(empresaData, null, 2)));
 
-  // 2. Verificar se o projeto EAS já existe e inicializar automaticamente se necessário
+  // 2. Criar app.json temporário (EAS CLI precisa de JSON estático)
+  const appJsonContent = {
+    expo: {
+      name: empresaData.name,
+      slug: empresaData.slug,
+      version: "1.0.0",
+      orientation: "portrait",
+      icon: empresaData.logo || "./assets/images/icon.png",
+      scheme: empresaData.slug,
+      userInterfaceStyle: "automatic",
+      splash: {
+        image: "./assets/images/splash-icon.png",
+        resizeMode: "contain",
+        backgroundColor: empresaData.primaryColor || "#2563eb"
+      },
+      android: {
+        package: `com.vortex.${empresaData.slug.replace(/-/g, '')}`,
+        adaptiveIcon: {
+          foregroundImage: empresaData.logo || "./assets/images/adaptive-icon.png",
+          backgroundColor: empresaData.primaryColor || "#2563eb"
+        }
+      },
+      ios: {
+        supportsTablet: true,
+        bundleIdentifier: `com.vortex.${empresaData.slug.replace(/-/g, '')}`
+      },
+      web: {
+        bundler: "metro",
+        output: "static",
+        favicon: "./assets/images/favicon.png"
+      },
+      plugins: ["expo-router"],
+      experiments: {
+        typedRoutes: true
+      },
+      extra: {
+        tenantId: empresaData.id,
+        tenantSlug: empresaData.slug,
+        tenantName: empresaData.name,
+        primaryColor: empresaData.primaryColor || "#2563eb",
+        businessType: empresaData.businessType,
+        phone: empresaData.phone,
+        logo: empresaData.logo,
+        eas: {
+          projectId: empresaData.projectId || tenant.project_id || ""
+        }
+      }
+    }
+  };
+
+  fs.writeFileSync('app.json', JSON.stringify(appJsonContent, null, 2));
+  console.log(chalk.cyan('📁 app.json temporário criado'));
+
+  // 3. Verificar se o projeto EAS já existe e inicializar automaticamente se necessário
   console.log(chalk.yellow('\n🔧 Verificando projeto EAS...'));
   
-  let projectId = empresaData.projectId;
+  let projectId = empresaData.projectId || tenant.project_id;
   
-  // Verificar se tem projectId no Supabase
-  if (!projectId && tenant.project_id) {
-    projectId = tenant.project_id;
-    console.log(chalk.green(`✅ Projeto EAS encontrado no Supabase: ${projectId}`));
-  }
-  
-  // Se não tem projectId, criar o projeto automaticamente
-  if (!projectId) {
+  if (projectId) {
+    console.log(chalk.green(`✅ Projeto EAS já configurado: ${projectId}`));
+    // Atualizar app.json com o projectId
+    appJsonContent.expo.extra.eas.projectId = projectId;
+    fs.writeFileSync('app.json', JSON.stringify(appJsonContent, null, 2));
+  } else {
     console.log(chalk.yellow('🔧 Criando projeto EAS automaticamente...'));
     
     // Usar --force para criar o projeto sem prompts
@@ -74,42 +125,55 @@ async function buildTenant(tenant: any) {
       easInitProcess.on('close', resolve);
     });
 
-    // Extrair o projectId do output
+    // Extrair o projectId do output ou do app.json
     const projectIdMatch = output.match(/"projectId":\s*"([^"]+)"|projectId['":\s]+([a-f0-9-]{36})/i);
     if (projectIdMatch && (projectIdMatch[1] || projectIdMatch[2])) {
       projectId = projectIdMatch[1] || projectIdMatch[2];
       console.log(chalk.green(`✅ Projeto EAS criado: ${projectId}`));
     } else {
-      console.log(chalk.yellow('⚠️ Não foi possível extrair o projectId do output'));
-      console.log(chalk.gray('Output completo:'));
-      console.log(output);
-      
-      // Tentar ler do app.config.js
+      // Tentar ler do app.json que o EAS acabou de atualizar
       try {
-        const appConfig = require(path.resolve('app.config.js'));
-        const config = typeof appConfig === 'function' ? appConfig() : appConfig;
-        if (config.expo?.extra?.eas?.projectId) {
-          projectId = config.expo.extra.eas.projectId;
-          console.log(chalk.green(`✅ ProjectId extraído do app.config.js: ${projectId}`));
+        const appJsonUpdated = JSON.parse(fs.readFileSync('app.json', 'utf-8'));
+        if (appJsonUpdated.expo?.extra?.eas?.projectId) {
+          projectId = appJsonUpdated.expo.extra.eas.projectId;
+          console.log(chalk.green(`✅ ProjectId extraído do app.json: ${projectId}`));
         }
       } catch (err) {
-        console.log(chalk.yellow('⚠️ Não foi possível ler app.config.js'));
+        console.log(chalk.yellow('⚠️ Não foi possível ler app.json atualizado'));
+        console.log(chalk.gray('Output do EAS init:'));
+        console.log(output);
       }
     }
 
-    if (!projectId && initExitCode !== 0) {
-      console.error(chalk.redBright(`❌ Falha ao inicializar EAS para ${tenant.slug}`));
+    if (!projectId) {
+      if (initExitCode !== 0) {
+        console.error(chalk.redBright(`❌ Falha ao inicializar EAS para ${tenant.slug}`));
+        return;
+      }
+      console.error(chalk.redBright(`❌ ProjectId não encontrado para ${tenant.slug}`));
       return;
     }
 
     // Atualizar empresa.json com o projectId
-    if (projectId) {
-      empresaData.projectId = projectId;
-      fs.writeFileSync('empresa.json', JSON.stringify(empresaData, null, 2));
-      console.log(chalk.cyan('📁 empresa.json atualizado com projectId'));
+    empresaData.projectId = projectId;
+    fs.writeFileSync('empresa.json', JSON.stringify(empresaData, null, 2));
+    console.log(chalk.cyan('📁 empresa.json atualizado com projectId'));
+
+    // Salvar projectId no Supabase
+    console.log(chalk.yellow('💾 Salvando projectId no Supabase...'));
+    const { data: updateData, error: updateError } = await supabase
+      .from('tenants')
+      .update({ project_id: projectId })
+      .eq('id', tenant.id)
+      .select();
+
+    if (updateError) {
+      console.log(chalk.red(`❌ Erro ao salvar projectId no Supabase: ${updateError.message}`));
+    } else if (updateData && updateData.length > 0) {
+      console.log(chalk.green('✅ ProjectId salvo no Supabase com sucesso!'));
+    } else {
+      console.log(chalk.yellow('⚠️ Nenhum registro atualizado no Supabase'));
     }
-  } else {
-    console.log(chalk.green(`✅ Projeto EAS já configurado: ${projectId}`));
   }
 
   // 3. Submeter build LOCAL para EAS
@@ -138,22 +202,7 @@ async function buildTenant(tenant: any) {
 
   console.log(chalk.greenBright(`✅ Build LOCAL finalizado com sucesso para ${tenant.name}!`));
 
-  // 4. Salvar projectId no Supabase se foi criado agora
-  if (projectId && !tenant.project_id) {
-    console.log(chalk.yellow('💾 Salvando projectId no Supabase...'));
-    const { error: updateError } = await supabase
-      .from('tenants')
-      .update({ project_id: projectId })
-      .eq('id', tenant.id);
-
-    if (updateError) {
-      console.log(chalk.yellow(`⚠️ Não foi possível salvar o projectId: ${updateError.message}`));
-    } else {
-      console.log(chalk.green('✅ ProjectId salvo no Supabase!'));
-    }
-  }
-
-  // 5. Mover o APK gerado para a pasta do tenant
+  // 4. Mover o APK gerado para a pasta do tenant
   const apkPattern = /\.apk$/;
   const files = fs.readdirSync('.');
   const apkFile = files.find(f => apkPattern.test(f));
@@ -171,9 +220,12 @@ async function buildTenant(tenant: any) {
     console.log(chalk.yellow('⚠️ Nenhum APK encontrado na raiz do projeto.'));
   }
 
-  // 6. Limpar empresa.json
+  // 5. Limpar arquivos temporários
   if (fs.existsSync('empresa.json')) {
     fs.unlinkSync('empresa.json');
+  }
+  if (fs.existsSync('app.json')) {
+    fs.unlinkSync('app.json');
   }
 }
 
