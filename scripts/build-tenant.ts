@@ -53,8 +53,8 @@ async function buildTenant(tenant: any) {
   if (!projectId) {
     console.log(chalk.yellow('🔧 Criando projeto EAS automaticamente...'));
     
-    // Usar echo "yes" | para responder automaticamente ao prompt
-    const easInitProcess = spawn('bash', ['-c', `echo "yes" | npx eas init`], {
+    // Usar --force para criar o projeto sem prompts
+    const easInitProcess = spawn('npx', ['eas', 'init', '--force', '--non-interactive'], {
       stdio: 'pipe',
       shell: true
     });
