@@ -43,11 +43,18 @@ async function buildTenant(tenant: any) {
   
   let projectId = empresaData.projectId;
   
-  // Se não tem projectId no .env, verificar se já existe no sistema
+  // Verificar se tem projectId no Supabase
+  if (!projectId && tenant.project_id) {
+    projectId = tenant.project_id;
+    console.log(chalk.green(`✅ Projeto EAS encontrado no Supabase: ${projectId}`));
+  }
+  
+  // Se não tem projectId, criar o projeto automaticamente
   if (!projectId) {
-    console.log(chalk.yellow('🔧 Inicializando projeto EAS automaticamente...'));
+    console.log(chalk.yellow('🔧 Criando projeto EAS automaticamente...'));
     
-    const easInitProcess = spawn('npx', ['eas', 'init', '--non-interactive'], {
+    // Usar echo "yes" | para responder automaticamente ao prompt
+    const easInitProcess = spawn('bash', ['-c', `echo "yes" | npx eas init`], {
       stdio: 'pipe',
       shell: true
     });
@@ -68,19 +75,39 @@ async function buildTenant(tenant: any) {
     });
 
     // Extrair o projectId do output
-    const projectIdMatch = output.match(/"projectId":\s*"([^"]+)"/);
-    if (projectIdMatch && projectIdMatch[1]) {
-      projectId = projectIdMatch[1];
+    const projectIdMatch = output.match(/"projectId":\s*"([^"]+)"|projectId['":\s]+([a-f0-9-]{36})/i);
+    if (projectIdMatch && (projectIdMatch[1] || projectIdMatch[2])) {
+      projectId = projectIdMatch[1] || projectIdMatch[2];
       console.log(chalk.green(`✅ Projeto EAS criado: ${projectId}`));
-    } else if (initExitCode !== 0) {
+    } else {
+      console.log(chalk.yellow('⚠️ Não foi possível extrair o projectId do output'));
+      console.log(chalk.gray('Output completo:'));
+      console.log(output);
+      
+      // Tentar ler do app.config.js
+      try {
+        const appConfig = require(path.resolve('app.config.js'));
+        const config = typeof appConfig === 'function' ? appConfig() : appConfig;
+        if (config.expo?.extra?.eas?.projectId) {
+          projectId = config.expo.extra.eas.projectId;
+          console.log(chalk.green(`✅ ProjectId extraído do app.config.js: ${projectId}`));
+        }
+      } catch (err) {
+        console.log(chalk.yellow('⚠️ Não foi possível ler app.config.js'));
+      }
+    }
+
+    if (!projectId && initExitCode !== 0) {
       console.error(chalk.redBright(`❌ Falha ao inicializar EAS para ${tenant.slug}`));
       return;
     }
 
     // Atualizar empresa.json com o projectId
-    empresaData.projectId = projectId;
-    fs.writeFileSync('empresa.json', JSON.stringify(empresaData, null, 2));
-    console.log(chalk.cyan('📁 empresa.json atualizado com projectId'));
+    if (projectId) {
+      empresaData.projectId = projectId;
+      fs.writeFileSync('empresa.json', JSON.stringify(empresaData, null, 2));
+      console.log(chalk.cyan('📁 empresa.json atualizado com projectId'));
+    }
   } else {
     console.log(chalk.green(`✅ Projeto EAS já configurado: ${projectId}`));
   }

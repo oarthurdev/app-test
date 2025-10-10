@@ -82,7 +82,11 @@ Este comando irá:
 
 **Importante:** Certifique-se de estar logado no EAS antes (`npx eas login`).
 
-**Nota:** O script é **totalmente automatizado**. Ele cria projetos EAS automaticamente quando necessário, responde "yes" aos prompts, e salva os `projectId` no Supabase para reutilização futura. Nenhuma interação manual é necessária durante o build.
+**Nota:** O script é **totalmente automatizado**. Ele:
+- Verifica se o projeto EAS já existe (no Supabase ou app.config.js)
+- Se não existir, cria automaticamente respondendo "yes" aos prompts do EAS CLI
+- Salva o `projectId` no Supabase para reutilização futura
+- Nenhuma interação manual é necessária durante o build
 
 ### Opção 2: Build Manual de um Tenant Específico
 
