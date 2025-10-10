@@ -16,50 +16,41 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 const BUILDS_DIR = path.resolve('builds');
 if (!fs.existsSync(BUILDS_DIR)) fs.mkdirSync(BUILDS_DIR);
 
-// 🔁 Intervalo de checagem (30 segundos)
-const POLL_INTERVAL = 30_000;
-
-// 🧠 Função para buscar status do build via API Expo
-async function getBuildStatus(buildId: string) {
-  const res = await fetch(`https://api.expo.dev/v2/builds/${buildId}`);
-  if (!res.ok) throw new Error(`Erro ao consultar status do build ${buildId}`);
-  return await res.json();
-}
-
 // 🧱 Função principal de build
 async function buildTenant(tenant: any) {
   console.log(chalk.blueBright(`\n🏗️  Iniciando build para: ${tenant.name} (${tenant.slug})`));
 
-  // 1. Criar o empresa.json
-  fs.writeFileSync('empresa.json', JSON.stringify(tenant, null, 2));
-  console.log(chalk.cyan('📁 empresa.json gerado com sucesso.'));
+  // 1. Criar o empresa.json com dados do Supabase
+  const empresaData = {
+    id: tenant.id,
+    name: tenant.name,
+    slug: tenant.slug,
+    businessType: tenant.business_type || 'Estabelecimento',
+    phone: tenant.phone || '',
+    logo: tenant.logo || '',
+    primaryColor: tenant.primary_color || '#2563eb',
+    subdomain: tenant.subdomain || tenant.slug,
+    active: tenant.active,
+    projectId: process.env[`EAS_PROJECT_ID_${tenant.slug.toUpperCase().replace(/-/g, '_')}`] || ''
+  };
 
-  // 2. Submeter build para EAS
-  console.log(chalk.yellow('⚙️ Submetendo build para EAS...'));
-  console.log(chalk.gray(`> Executando: npx eas build --platform android --local --non-interactive --profile production --json\n`));
+  fs.writeFileSync('empresa.json', JSON.stringify(empresaData, null, 2));
+  console.log(chalk.cyan('📁 empresa.json gerado com sucesso.'));
+  console.log(chalk.gray(JSON.stringify(empresaData, null, 2)));
+
+  // 2. Submeter build LOCAL para EAS
+  console.log(chalk.yellow('\n⚙️ Iniciando build LOCAL com EAS...'));
+  console.log(chalk.gray(`> Executando: npx eas build --platform android --local --non-interactive --profile production\n`));
 
   const buildProcess = spawn('npx', [
     'eas', 'build',
     '--platform', 'android',
     '--local',
     '--non-interactive',
-    '--profile', 'production',
-    '--json'
-  ]);
-
-  // Exibir saída em tempo real
-  buildProcess.stdout.on('data', (data) => {
-    const text = data.toString();
-    if (text.includes('✔')) console.log(chalk.green(text.trim()));
-    else if (text.includes('✖') || text.includes('Error')) console.log(chalk.red(text.trim()));
-    else if (text.includes('›') || text.includes('⠋') || text.includes('RUN_GRADLEW'))
-      console.log(chalk.gray(text.trim()));
-    else
-      console.log(text.trim());
-  });
-
-  buildProcess.stderr.on('data', (data) => {
-    console.error(chalk.redBright(data.toString().trim()));
+    '--profile', 'production'
+  ], {
+    stdio: 'inherit',
+    shell: true
   });
 
   const exitCode: number = await new Promise((resolve) => {
@@ -71,55 +62,33 @@ async function buildTenant(tenant: any) {
     return;
   }
 
-  console.log(chalk.greenBright('✅ EAS Build finalizado com sucesso (fase local concluída)!'));
+  console.log(chalk.greenBright(`✅ Build LOCAL finalizado com sucesso para ${tenant.name}!`));
 
-  // 3. Captura o ID do build (se existir)
-  let buildId: string | undefined;
-  try {
-    const resultPath = path.resolve('build-result.json');
-    if (fs.existsSync(resultPath)) {
-      const resultData = JSON.parse(fs.readFileSync(resultPath, 'utf8'));
-      buildId = resultData.id;
+  // 3. Mover o APK gerado para a pasta do tenant
+  const apkPattern = /\.apk$/;
+  const files = fs.readdirSync('.');
+  const apkFile = files.find(f => apkPattern.test(f));
+
+  if (apkFile) {
+    const tenantBuildDir = path.join(BUILDS_DIR, tenant.slug);
+    if (!fs.existsSync(tenantBuildDir)) {
+      fs.mkdirSync(tenantBuildDir, { recursive: true });
     }
 
-    if (buildId) {
-      console.log(chalk.greenBright(`🚀 Build submetido com sucesso!`));
-      console.log(chalk.gray(`🔗 https://expo.dev/builds/${buildId}`));
-    } else {
-      console.log(chalk.yellow('⚠️ Nenhum ID de build encontrado (modo local).'));
-    }
-  } catch (err) {
-    console.error(chalk.red('❌ Falha ao interpretar saída do EAS CLI:'), err);
+    const newApkPath = path.join(tenantBuildDir, `${tenant.slug}-${Date.now()}.apk`);
+    fs.renameSync(apkFile, newApkPath);
+    console.log(chalk.greenBright(`📦 APK movido para: ${newApkPath}`));
+  } else {
+    console.log(chalk.yellow('⚠️ Nenhum APK encontrado na raiz do projeto.'));
   }
 
-  // 4. Polling (caso remoto)
-  if (buildId) {
-    let status = 'queued';
-    while (status !== 'finished' && status !== 'errored' && status !== 'canceled') {
-      await new Promise((r) => setTimeout(r, POLL_INTERVAL));
-
-      try {
-        const data = await getBuildStatus(buildId!);
-        status = data.status;
-        const emoji =
-          status === 'finished' ? '✅' :
-          status === 'errored' ? '❌' :
-          status === 'canceled' ? '⚠️' : '⏳';
-        console.log(chalk.magenta(`[${new Date().toLocaleTimeString()}] ${emoji} [${tenant.slug}] Status: ${status}`));
-      } catch (err) {
-        console.error(chalk.red(`⚠️ Erro ao verificar status de ${tenant.slug}:`), err);
-      }
-    }
-
-    if (status === 'finished') {
-      console.log(chalk.greenBright(`✅ Build finalizado para ${tenant.name}!`));
-    } else {
-      console.error(chalk.redBright(`❌ Build ${tenant.slug} falhou ou foi cancelado.`));
-    }
+  // 4. Limpar empresa.json
+  if (fs.existsSync('empresa.json')) {
+    fs.unlinkSync('empresa.json');
   }
 }
 
-// 🔥 Função principal com paralelismo controlado
+// 🔥 Função principal com execução sequencial
 async function main() {
   console.log(chalk.cyanBright('🚀 Buscando tenants ativos no Supabase...'));
 
@@ -138,26 +107,21 @@ async function main() {
     return;
   }
 
-  console.log(chalk.magentaBright(`\n🏗️ Iniciando builds para ${tenants.length} tenants...\n`));
+  console.log(chalk.magentaBright(`\n🏗️ Iniciando builds locais para ${tenants.length} tenants...\n`));
 
-  const CONCURRENCY = 2;
-  const activeQueue: Promise<void>[] = [];
-
+  // Executar builds sequencialmente para evitar conflitos
   for (const tenant of tenants) {
-    if (activeQueue.length >= CONCURRENCY) await Promise.race(activeQueue);
-
-    const p = buildTenant(tenant)
-      .catch((err) => console.error(chalk.red(`❌ Erro ao buildar ${tenant.slug}:`), err))
-      .finally(() => {
-        const i = activeQueue.indexOf(p);
-        if (i !== -1) activeQueue.splice(i, 1);
-      });
-
-    activeQueue.push(p);
+    try {
+      await buildTenant(tenant);
+      console.log(chalk.green(`\n✅ Build concluído para ${tenant.name}\n`));
+      console.log(chalk.gray('─'.repeat(60)));
+    } catch (err) {
+      console.error(chalk.red(`❌ Erro ao buildar ${tenant.slug}:`), err);
+    }
   }
 
-  await Promise.allSettled(activeQueue);
-  console.log(chalk.greenBright('\n✅ Todos os builds foram concluídos!'));
+  console.log(chalk.greenBright('\n✨ Todos os builds foram concluídos!'));
+  console.log(chalk.cyan(`\n📦 APKs salvos em: ${BUILDS_DIR}/\n`));
 }
 
 // 🏁 Executa

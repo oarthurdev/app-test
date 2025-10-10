@@ -1,121 +1,112 @@
 
-# Sistema de Builds Multi-Tenant
+# Sistema de Builds Multi-Tenant com Supabase
 
-Este sistema permite gerar builds customizados para cada tenant (estabelecimento) cadastrado no sistema.
+Este sistema permite gerar builds APK customizados **localmente** para cada tenant (estabelecimento) cadastrado no Supabase.
 
-## 📋 Estrutura
+## 📋 Como Funciona
 
-Cada tenant terá seu próprio app customizado com:
+O sistema busca automaticamente todos os tenants ativos no Supabase e gera builds APK locais para cada um, com:
 - Nome personalizado
-- Logo própria
+- Logo própria (se configurada)
 - Cor primária customizada
-- Package/Bundle ID único
-- Configurações específicas
+- Package ID único baseado no slug
+- Configurações específicas de cada empresa
 
-## 🚀 Como Usar
+## 🚀 Pré-requisitos
 
-### 1. Adicionar Cor Primária aos Tenants
+### 1. Configurar Variáveis de Ambiente
 
-Primeiro, execute a migration para adicionar o campo `primary_color`:
-
-```bash
-npm run db:push
-```
-
-### 2. Atualizar Tenants no Banco
-
-Adicione cores primárias aos seus tenants:
-
-```sql
-UPDATE tenants SET primary_color = '#FF5733' WHERE slug = 'barbearia-central';
-UPDATE tenants SET primary_color = '#33FF57' WHERE slug = 'salao-beleza';
-```
-
-### 3. Gerar Configurações de Build
-
-Execute o script para gerar as configurações:
+Crie um arquivo `.env` baseado no `.env.example`:
 
 ```bash
-npm run generate-builds
+cp .env.example .env
+```
+
+Preencha as variáveis do Supabase:
+
+```env
+SUPABASE_URL=https://seu-projeto.supabase.co
+SUPABASE_ANON_KEY=sua-chave-anonima
+```
+
+### 2. Estrutura da Tabela Tenants
+
+Certifique-se que a tabela `tenants` no Supabase possui os campos:
+
+- `id` (integer)
+- `name` (text) - Nome do estabelecimento
+- `slug` (text) - Identificador único
+- `business_type` (text, nullable) - Tipo de negócio
+- `phone` (text, nullable) - Telefone
+- `logo` (text, nullable) - URL do logo
+- `primary_color` (text, nullable) - Cor primária (#hex)
+- `subdomain` (text, nullable) - Subdomínio
+- `active` (boolean) - Se está ativo
+
+### 3. Instalar Dependências
+
+```bash
+npm install @supabase/supabase-js chalk
+```
+
+## 🏗️ Como Fazer os Builds
+
+### Opção 1: Build de Todos os Tenants Ativos
+
+```bash
+npm run build-tenants
 ```
 
 Este comando irá:
-- Criar uma pasta `builds/` na raiz do projeto
-- Para cada tenant ativo, criar um subdiretório com:
-  - `app.json` - Configuração customizada do Expo
-  - `theme.ts` - Configurações de tema
-  - `build-commands.txt` - Comandos de build
-  - `README.md` - Instruções específicas
+1. Buscar todos os tenants ativos no Supabase
+2. Para cada tenant:
+   - Gerar `empresa.json` com os dados
+   - Executar `eas build --local` para Android
+   - Salvar o APK em `builds/{slug}/`
 
-### 4. Configurar Projeto EAS para Cada Tenant
-
-Para cada tenant, você precisa criar um projeto EAS separado:
+### Opção 2: Build Manual de um Tenant Específico
 
 ```bash
-cd builds/barbearia-central
-eas init
+# 1. Buscar dados do tenant no Supabase manualmente
+# 2. Criar empresa.json com os dados
+# 3. Executar:
+npx eas build --platform android --local --profile production
 ```
 
-Anote o Project ID gerado e adicione ao `.env`:
-
-```
-EAS_PROJECT_ID_BARBEARIA_CENTRAL=seu-project-id-aqui
-EAS_PROJECT_ID_SALAO_BELEZA=outro-project-id-aqui
-```
-
-### 5. Fazer o Build
-
-Para fazer o build de um tenant específico:
-
-```bash
-npm run build-tenant barbearia-central android
-```
-
-Ou manualmente:
-
-```bash
-cd builds/barbearia-central
-cp app.json ../../app.json
-eas build --platform android --profile preview
-```
-
-## 📦 Estrutura de Diretórios
+## 📦 Estrutura de Saída
 
 ```
 builds/
 ├── barbearia-central/
-│   ├── app.json
-│   ├── theme.ts
-│   ├── build-commands.txt
-│   └── README.md
+│   ├── barbearia-central-1234567890.apk
+│   └── barbearia-central-1234567891.apk
 ├── salao-beleza/
-│   ├── app.json
-│   ├── theme.ts
-│   ├── build-commands.txt
-│   └── README.md
+│   ├── salao-beleza-1234567892.apk
+│   └── ...
 └── ...
 ```
 
-## 🎨 Customização de Cores
+## 🎨 Customização Automática
 
-As cores são aplicadas automaticamente em:
-- Splash screen background
-- Ícone adaptativo (Android)
-- Tema do app através do `TenantContext`
+Para cada tenant, o build aplica automaticamente:
 
-## 📱 Package/Bundle IDs
+- **Nome do App**: `tenant.name`
+- **Package ID Android**: `com.vortex.{slug}` (ex: `com.vortex.barbeariacentral`)
+- **Bundle ID iOS**: `com.vortex.{slug}`
+- **Cor Primária**: `tenant.primary_color` (aplicada no splash e ícone adaptativo)
+- **Logo**: `tenant.logo` (se disponível)
 
-Os IDs são gerados automaticamente baseados no slug:
-- **iOS**: `com.vortex.barbeariacentral`
-- **Android**: `com.vortex.barbeariacentral`
+## ⚙️ Configuração de Build (eas.json)
 
-## ⚙️ Profiles de Build (eas.json)
-
-Você pode customizar os profiles de build editando `eas.json`:
+O arquivo `eas.json` possui os perfis:
 
 ```json
 {
   "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
     "preview": {
       "distribution": "internal"
     },
@@ -126,22 +117,57 @@ Você pode customizar os profiles de build editando `eas.json`:
 }
 ```
 
-## 🔄 Workflow Recomendado
+## 🔄 Workflow Completo
 
-1. Cadastre um novo tenant no sistema
-2. Defina nome, logo e cor primária
-3. Execute `npm run generate-builds`
-4. Configure o projeto EAS para o novo tenant
-5. Faça o build usando `npm run build-tenant <slug> <platform>`
-6. Distribua o app gerado
+1. **Cadastrar novo tenant no Supabase**
+   - Preencher nome, slug, cor primária, etc.
+   - Marcar como `active = true`
+
+2. **Executar script de build**
+   ```bash
+   npm run build-tenants
+   ```
+
+3. **Aguardar conclusão**
+   - O script processa cada tenant sequencialmente
+   - APKs são salvos automaticamente
+
+4. **Distribuir os APKs**
+   - Encontre os APKs em `builds/{slug}/`
+   - Distribua para os clientes
 
 ## 🛠️ Troubleshooting
 
-### Build falha com "Project not configured"
-Execute `eas init` no diretório do tenant.
+### Erro: "SUPABASE_URL must be set"
+Configure as variáveis de ambiente no `.env`
+
+### Build falha com erro de permissão
+Execute: `chmod +x gradlew`
+
+### APK não encontrado após build
+Verifique os logs do EAS Build para erros
 
 ### Cores não aplicadas
-Verifique se o campo `primary_color` está preenchido no banco de dados.
+Verifique se o campo `primary_color` está preenchido no formato `#RRGGBB`
 
-### Bundle ID duplicado
-Cada tenant deve ter um slug único.
+## 📝 Scripts Disponíveis
+
+```json
+{
+  "build-tenants": "tsx scripts/build-tenant.ts",
+  "generate-builds": "tsx scripts/generate-tenant-builds.ts"
+}
+```
+
+## 🔐 Segurança
+
+- As variáveis de ambiente não devem ser commitadas
+- Use `.env.example` como template
+- Mantenha as chaves do Supabase seguras
+
+## 📱 Próximos Passos
+
+1. Configurar EAS Project IDs individuais (opcional)
+2. Implementar versionamento automático
+3. Adicionar suporte para builds iOS
+4. Implementar upload automático para Play Store
