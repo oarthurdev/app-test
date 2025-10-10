@@ -107,26 +107,34 @@ async function main() {
     return;
   }
 
-  // Verificar se EAS está inicializado
-  console.log(chalk.yellow('\n🔧 Verificando configuração do EAS...'));
-  
+  // Verificar se arquivo de configuração existe
   if (!fs.existsSync('app.json') && !fs.existsSync('app.config.js')) {
     console.log(chalk.red('❌ Arquivo app.json ou app.config.js não encontrado.'));
     process.exit(1);
   }
 
-  // Tentar inicializar EAS se necessário
-  console.log(chalk.cyan('⚙️ Inicializando EAS (se necessário)...\n'));
-  const initProcess = spawn('npx', ['eas', 'init', '--non-interactive'], {
-    stdio: 'inherit',
+  // Verificar se está logado no EAS
+  console.log(chalk.yellow('\n🔧 Verificando login do EAS...'));
+  const whoamiProcess = spawn('npx', ['eas', 'whoami'], {
+    stdio: 'pipe',
     shell: true
   });
 
-  await new Promise((resolve) => {
-    initProcess.on('close', resolve);
+  const isLoggedIn: boolean = await new Promise((resolve) => {
+    whoamiProcess.on('close', (code) => {
+      resolve(code === 0);
+    });
   });
 
-  console.log(chalk.magentaBright(`\n🏗️ Iniciando builds locais para ${tenants.length} tenants...\n`));
+  if (!isLoggedIn) {
+    console.log(chalk.red('\n❌ Você não está logado no EAS CLI.'));
+    console.log(chalk.yellow('Por favor, execute primeiro:'));
+    console.log(chalk.cyan('  npx eas login\n'));
+    process.exit(1);
+  }
+
+  console.log(chalk.green('✅ Login EAS verificado com sucesso!\n'));
+  console.log(chalk.magentaBright(`🏗️ Iniciando builds locais para ${tenants.length} tenants...\n`));
 
   // Executar builds sequencialmente para evitar conflitos
   for (const tenant of tenants) {
