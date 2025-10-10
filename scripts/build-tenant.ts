@@ -176,7 +176,78 @@ async function buildTenant(tenant: any) {
     }
   }
 
-  // 3. Submeter build LOCAL para EAS
+  // 3. Configurar credenciais locais (keystore)
+  const keystoreDir = path.join(BUILDS_DIR, tenant.slug, 'credentials');
+  const keystorePath = path.join(keystoreDir, 'keystore.jks');
+  
+  if (!fs.existsSync(keystoreDir)) {
+    fs.mkdirSync(keystoreDir, { recursive: true });
+  }
+
+  // Gerar keystore local se não existir
+  if (!fs.existsSync(keystorePath)) {
+    console.log(chalk.yellow('🔐 Gerando keystore local...'));
+    
+    const keystorePassword = 'vortex123'; // Senha padrão para builds de desenvolvimento
+    const keyAlias = tenant.slug;
+    
+    const keytoolProcess = spawn('keytool', [
+      '-genkey',
+      '-v',
+      '-keystore', keystorePath,
+      '-alias', keyAlias,
+      '-keyalg', 'RSA',
+      '-keysize', '2048',
+      '-validity', '10000',
+      '-storepass', keystorePassword,
+      '-keypass', keystorePassword,
+      '-dname', `CN=${tenant.name}, OU=Vortex, O=Vortex, L=City, ST=State, C=BR`
+    ], {
+      stdio: 'pipe',
+      shell: true
+    });
+
+    const keytoolExitCode: number = await new Promise((resolve) => {
+      keytoolProcess.on('close', resolve);
+    });
+
+    if (keytoolExitCode !== 0) {
+      console.error(chalk.redBright('❌ Falha ao gerar keystore'));
+      return;
+    }
+
+    console.log(chalk.green('✅ Keystore local gerado com sucesso'));
+    
+    // Salvar informações do keystore em um arquivo JSON para referência
+    const keystoreInfo = {
+      path: keystorePath,
+      password: keystorePassword,
+      alias: keyAlias,
+      tenant: tenant.slug
+    };
+    
+    fs.writeFileSync(
+      path.join(keystoreDir, 'keystore-info.json'),
+      JSON.stringify(keystoreInfo, null, 2)
+    );
+  }
+
+  // 4. Criar credentials.json para o EAS usar credenciais locais
+  const credentialsJson = {
+    android: {
+      keystore: {
+        keystorePath: keystorePath,
+        keystorePassword: 'vortex123',
+        keyAlias: tenant.slug,
+        keyPassword: 'vortex123'
+      }
+    }
+  };
+
+  fs.writeFileSync('credentials.json', JSON.stringify(credentialsJson, null, 2));
+  console.log(chalk.cyan('📁 credentials.json criado'));
+
+  // 5. Submeter build LOCAL para EAS
   console.log(chalk.yellow('⚙️ Iniciando build LOCAL com EAS...'));
   console.log(chalk.gray(`> Executando: npx eas build --platform android --local --non-interactive --profile production\n`));
 
@@ -226,6 +297,9 @@ async function buildTenant(tenant: any) {
   }
   if (fs.existsSync('app.json')) {
     fs.unlinkSync('app.json');
+  }
+  if (fs.existsSync('credentials.json')) {
+    fs.unlinkSync('credentials.json');
   }
 }
 

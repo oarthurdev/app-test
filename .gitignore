@@ -44,3 +44,18 @@ app-example
 
 # Ignore Gradle build output directory
 build
+
+# EAS
+.expo/
+
+# Builds
+builds/
+*.apk
+*.aab
+*.ipa
+
+# Credentials (nunca commitar!)
+credentials.json
+**/credentials/
+*.jks
+*.keystore
