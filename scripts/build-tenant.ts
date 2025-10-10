@@ -38,8 +38,27 @@ async function buildTenant(tenant: any) {
   console.log(chalk.cyan('📁 empresa.json gerado com sucesso.'));
   console.log(chalk.gray(JSON.stringify(empresaData, null, 2)));
 
-  // 2. Submeter build LOCAL para EAS
-  console.log(chalk.yellow('\n⚙️ Iniciando build LOCAL com EAS...'));
+  // 2. Inicializar EAS para o tenant (se necessário)
+  console.log(chalk.yellow('\n🔧 Inicializando projeto EAS...'));
+  
+  const easInitProcess = spawn('npx', ['eas', 'init', '--force'], {
+    stdio: 'inherit',
+    shell: true
+  });
+
+  const initExitCode: number = await new Promise((resolve) => {
+    easInitProcess.on('close', resolve);
+  });
+
+  if (initExitCode !== 0) {
+    console.error(chalk.redBright(`❌ Falha ao inicializar EAS para ${tenant.slug}`));
+    return;
+  }
+
+  console.log(chalk.green('✅ EAS inicializado com sucesso!\n'));
+
+  // 3. Submeter build LOCAL para EAS
+  console.log(chalk.yellow('⚙️ Iniciando build LOCAL com EAS...'));
   console.log(chalk.gray(`> Executando: npx eas build --platform android --local --non-interactive --profile production\n`));
 
   const buildProcess = spawn('npx', [
@@ -64,7 +83,7 @@ async function buildTenant(tenant: any) {
 
   console.log(chalk.greenBright(`✅ Build LOCAL finalizado com sucesso para ${tenant.name}!`));
 
-  // 3. Mover o APK gerado para a pasta do tenant
+  // 4. Mover o APK gerado para a pasta do tenant
   const apkPattern = /\.apk$/;
   const files = fs.readdirSync('.');
   const apkFile = files.find(f => apkPattern.test(f));
@@ -82,7 +101,7 @@ async function buildTenant(tenant: any) {
     console.log(chalk.yellow('⚠️ Nenhum APK encontrado na raiz do projeto.'));
   }
 
-  // 4. Limpar empresa.json
+  // 5. Limpar empresa.json
   if (fs.existsSync('empresa.json')) {
     fs.unlinkSync('empresa.json');
   }

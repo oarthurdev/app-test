@@ -74,10 +74,13 @@ Este comando irá:
 2. Buscar todos os tenants ativos no Supabase
 3. Para cada tenant:
    - Gerar `empresa.json` com os dados
+   - Inicializar o projeto EAS automaticamente (com `--force`)
    - Executar `eas build --local` para Android
    - Salvar o APK em `builds/{slug}/`
 
 **Importante:** Certifique-se de estar logado no EAS antes (`npx eas login`).
+
+**Nota:** O script inicializa o EAS automaticamente para cada tenant usando `eas init --force`, criando projetos separados quando necessário.
 
 ### Opção 2: Build Manual de um Tenant Específico
 
